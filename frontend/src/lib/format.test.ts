@@ -12,6 +12,7 @@ describe("format", () => {
     expect(formatElapsed(start, t + 65_000)).toBe("1:05");
     expect(formatElapsed(start, t + 2 * 3600_000 + 5 * 60_000)).toBe("2 h 05 min");
     expect(formatElapsed(start, t - 1000)).toBe("0:00");
+    expect(formatElapsed(start, t + (11 * 24 + 3) * 3600_000)).toBe("11 d 3 h");
   });
 
   it("usa la zona horaria de Caracas para decidir si es hoy", () => {

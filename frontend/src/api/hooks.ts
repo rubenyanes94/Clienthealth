@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 import { api, unwrap } from "./client";
 import type { InboxFilter } from "./types";
@@ -210,4 +210,48 @@ export function useContactConsent(conversationId: number) {
       ),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.conversation(conversationId) }),
   });
+}
+
+type MetricsQuery = { from: string; to: string; area_id?: number };
+
+/** Indicadores (supervisores). Se refrescan cada minuto con la pestaña visible. */
+export function useMetrics(query: MetricsQuery) {
+  const options = { params: { query } };
+  const common = {
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+    placeholderData: keepPreviousData,
+  };
+  return {
+    overview: useQuery({
+      queryKey: ["metrics", "overview", query],
+      queryFn: () => unwrap(api.GET("/api/metrics/overview", options)),
+      ...common,
+    }),
+    byHour: useQuery({
+      queryKey: ["metrics", "by-hour", query],
+      queryFn: () => unwrap(api.GET("/api/metrics/by-hour", options)),
+      ...common,
+    }),
+    byArea: useQuery({
+      queryKey: ["metrics", "by-area", query],
+      queryFn: () => unwrap(api.GET("/api/metrics/by-area", options)),
+      ...common,
+    }),
+    byAgent: useQuery({
+      queryKey: ["metrics", "by-agent", query],
+      queryFn: () => unwrap(api.GET("/api/metrics/by-agent", options)),
+      ...common,
+    }),
+    reasons: useQuery({
+      queryKey: ["metrics", "reasons", query],
+      queryFn: () => unwrap(api.GET("/api/metrics/reasons", options)),
+      ...common,
+    }),
+    csatDaily: useQuery({
+      queryKey: ["metrics", "csat-daily", query],
+      queryFn: () => unwrap(api.GET("/api/metrics/csat-daily", options)),
+      ...common,
+    }),
+  };
 }

@@ -3,7 +3,7 @@ import logging
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.api import admin, auth, contacts, conversations, copilot, inbox, ops, webhooks
+from app.api import admin, auth, contacts, conversations, copilot, inbox, metrics, ops, webhooks
 from app.services.conversations import ConversationError
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -29,6 +29,7 @@ for router in (
     conversations.router,
     copilot.router,
     contacts.router,
+    metrics.router,
     admin.router,
     admin.catalog_router,
     webhooks.router,

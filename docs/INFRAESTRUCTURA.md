@@ -68,7 +68,7 @@ atencion-pacientes/
 ├── CLAUDE.md                           ✅ resumen corto de comandos y reglas
 ├── docs/
 │   ├── INFRAESTRUCTURA.md              ✅ este documento
-│   └── METRICAS.md                     ➕ diccionario oficial de indicadores (fase 3)
+│   └── METRICAS.md                     ✅ diccionario oficial de indicadores
 ├── backend/
 │   ├── pyproject.toml                  ✅ deps de runtime + [tool.vercel]
 │   ├── .python-version                 ✅ 3.12
@@ -170,9 +170,10 @@ transacción. Sin evento, la acción no cuenta en los indicadores.
 | `GET /catalog` | Áreas y motivos activos (cualquier agente; para transferir y cerrar) |
 | `POST /copilot/{id}/summary` · `/suggest` · `/rewrite` · `/reason` | Copiloto Gemini |
 | `PUT /contacts/{id}/consent` | Registrar o retirar el consentimiento para mensajes proactivos (NPS) |
-| `GET /metrics/overview?from=&to=` · `/by-hour` · `/by-agent` · `/by-area` · `/reasons` · `/csat-daily` | Paneles (fase 3) |
+| `GET /metrics/overview?from=&to=&area_id=` · `/by-hour` · `/by-agent` · `/by-area` · `/reasons` · `/csat-daily` | Paneles (supervisor). Definiciones en `docs/METRICAS.md` |
 | `GET /metrics/live` | Cola, urgentes, espera más antigua, agentes conectados |
 | `GET/POST/PATCH /admin/areas` · `/admin/reasons` · `/admin/faqs` · `/admin/agents` | Catálogos (rol admin) |
+| `GET/PUT /admin/business-hours?area_id=` · `GET/POST/DELETE /admin/holidays` | Calendario hábil (rol admin) |
 | `GET /webhooks/whatsapp` | Verificación de Meta (`hub.verify_token`) |
 | `POST /webhooks/whatsapp` | Mensajes entrantes y estados de entrega |
 | `GET`/`POST /cron/daily-rollup` | Agregados diarios + detección de abandono |
@@ -399,7 +400,7 @@ Cada fase termina con sus pruebas en verde y un deploy de preview funcionando.
 - Copiloto: resumen, sugerir respuesta, mejorar redacción y sugerir motivo, con seudonimización.
 - Rediseño: tema claro (fondo blanco, texto negro), tipografía Inter y componentes refinados.
 
-**Fase 3 — Indicadores**
+**Fase 3 — Indicadores** ✅
 - `docs/METRICAS.md` con la fórmula exacta de cada KPI: 1ª respuesta, SLA, CSAT, NPS, FCR, contención
   del bot, abandono, resolución, reapertura y transferencias.
 - Calendario hábil por área y feriados (tabla + servicio de "minutos hábiles entre dos fechas").
@@ -486,3 +487,24 @@ Diferencias con la versión original de este documento y su motivo:
 7. **Tema**: se retiró el modo oscuro automático; la app es siempre clara (fondo blanco, texto negro),
    como pidió el centro. Los colores quedan solo para estados (urgente, cola, espera, encuestas) y el
    violeta identifica lo que hace el copiloto.
+
+## 19. Notas de implementación (fase 3)
+
+1. **Episodios**: los KPI de atención se calculan por *episodio* (de la entrada en cola al cierre), no
+   por conversación, para que las reaperturas no mezclen tiempos. Definición completa en
+   `docs/METRICAS.md`.
+2. **Cálculo al vuelo**: `services/metrics.py` carga los eventos de las conversaciones con actividad
+   en el período y calcula todo en memoria con funciones puras. No se crearon tablas de resumen
+   diario: §7 las reserva para cuando los paneles se vuelvan lentos. `daily-rollup` sigue registrando
+   el abandono y la NPS.
+3. **Calendario hábil**: tablas `business_hours` (franjas por día de la semana, por defecto o por área)
+   y `holidays` (nacionales o por área, únicos por día con `NULLS NOT DISTINCT`). El seed carga un
+   horario **provisional** (lunes a viernes 7–19 y sábado 7–13) y los feriados nacionales de 2026–2027,
+   a confirmar con el centro (§16). Se administran por API; la pantalla de administración queda para
+   la fase 4.
+4. **Paneles e informes**: solo supervisores y admin (el backend responde 403 a los agentes y el menú
+   los oculta). Los informes se exportan en CSV con `;`, coma decimal y BOM, para abrirlos directo en
+   Excel en español. La exportación `.xlsx` sigue en la fase 4.
+5. **Datos de demostración**: `python -m scripts.demo_data` genera 14 días de actividad ficticia para
+   ver los paneles en desarrollo (`--purge` la borra). Se niega a correr en producción.
+6. **Contactos**: la pantalla `/contactos` pasa a la fase 4.

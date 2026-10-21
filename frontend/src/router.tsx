@@ -5,6 +5,7 @@ import { RequireAuth } from "./features/auth/RequireAuth";
 import { CaseDetailPage } from "./features/cases/CaseDetailPage";
 import { CasesPage } from "./features/cases/CasesPage";
 import { InboxPage } from "./features/inbox/InboxPage";
+import { LazyPanelsPage, LazyReportsPage } from "./features/metrics/lazy";
 import { Placeholder } from "./features/metrics/Placeholder";
 
 export const router = createBrowserRouter([
@@ -21,9 +22,15 @@ export const router = createBrowserRouter([
       { path: "conversaciones/:id", element: <InboxPage /> },
       { path: "casos", element: <CasesPage /> },
       { path: "casos/:id", element: <CaseDetailPage /> },
-      { path: "paneles", element: <Placeholder title="Paneles" phase="fase 3" /> },
-      { path: "informes", element: <Placeholder title="Informes" phase="fase 3" /> },
-      { path: "contactos", element: <Placeholder title="Contactos" phase="fase 3" /> },
+      {
+        path: "paneles",
+        element: <LazyPanelsPage />,
+      },
+      {
+        path: "informes",
+        element: <LazyReportsPage />,
+      },
+      { path: "contactos", element: <Placeholder title="Contactos" phase="fase 4" /> },
       { path: "*", element: <Navigate to="/conversaciones" replace /> },
     ],
   },
