@@ -3,8 +3,9 @@ import { Inbox } from "lucide-react";
 import { Link } from "react-router";
 import { useInbox, useLiveMetrics, useMe } from "@/api/hooks";
 import type { InboxFilter } from "@/api/types";
+import { Avatar } from "@/components/ui/Avatar";
 import { Segmented } from "@/components/ui/Segmented";
-import { displayPhone, formatListTime } from "@/lib/format";
+import { formatListTime } from "@/lib/format";
 import { StatusPill, UrgentPill, WaitTimer } from "./bits";
 import { contactName } from "./permissions";
 
@@ -35,7 +36,7 @@ export function ConversationList({
 
   return (
     <section aria-label="Bandeja" className="flex h-full min-h-0 flex-col">
-      <div className="border-b border-line p-3">
+      <div className="px-3 pb-3">
         <Segmented
           label="Filtro de la bandeja"
           options={options}
@@ -43,56 +44,74 @@ export function ConversationList({
           onChange={onFilter}
         />
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto border-t border-line">
         {inbox.isPending && <p className="p-4 text-sm text-ink-3">Cargando…</p>}
         {inbox.error && <p className="p-4 text-sm text-danger">{inbox.error.message}</p>}
         {inbox.data?.items.length === 0 && (
-          <div className="flex flex-col items-center gap-2 p-10 text-center text-sm text-ink-3">
-            <Inbox className="size-6" aria-hidden />
-            No hay conversaciones aquí.
+          <div className="flex flex-col items-center gap-3 px-6 py-16 text-center">
+            <div className="flex size-11 items-center justify-center rounded-2xl bg-surface-3">
+              <Inbox className="size-5 text-ink-2" aria-hidden />
+            </div>
+            <p className="text-sm text-ink-3">No hay conversaciones aquí.</p>
           </div>
         )}
-        <ul>
-          {inbox.data?.items.map((c) => (
-            <li key={c.id}>
-              <Link
-                to={`/conversaciones/${c.id}?filtro=${filter}`}
-                aria-current={c.id === selectedId ? "true" : undefined}
-                className={clsx(
-                  "block border-b border-line px-4 py-3 transition hover:bg-surface-2",
-                  c.id === selectedId && "bg-brand-soft/60",
-                  c.is_urgent && "border-l-4 border-l-danger",
-                )}
-              >
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="truncate text-sm font-semibold">{contactName(c)}</span>
-                  {c.last_message_at && (
-                    <time className="shrink-0 text-xs text-ink-3" dateTime={c.last_message_at}>
-                      {formatListTime(c.last_message_at)}
-                    </time>
+        <ul className="divide-y divide-line">
+          {inbox.data?.items.map((c) => {
+            const selected = c.id === selectedId;
+            return (
+              <li key={c.id}>
+                <Link
+                  to={`/conversaciones/${c.id}?filtro=${filter}`}
+                  aria-current={selected ? "true" : undefined}
+                  className={clsx(
+                    "relative flex gap-3 px-4 py-3.5 transition",
+                    selected ? "bg-surface-3" : "hover:bg-surface-2",
                   )}
-                </div>
-                <div className="truncate text-xs text-ink-3">{displayPhone(c.contact.wa_id)}</div>
-                {c.last_message_preview && (
-                  <p className="mt-1 line-clamp-1 text-sm text-ink-2">
-                    {c.last_message_sender && c.last_message_sender !== "contact" && (
-                      <span className="text-ink-3">{SENDER_PREFIX[c.last_message_sender]}: </span>
+                >
+                  {selected && (
+                    <span className="absolute inset-y-2 left-0 w-0.5 rounded-r bg-ink" />
+                  )}
+                  <Avatar name={c.contact.name} urgent={c.is_urgent} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="truncate text-sm font-semibold">{contactName(c)}</span>
+                      {c.last_message_at && (
+                        <time
+                          className="shrink-0 text-[11px] text-ink-3 tabular-nums"
+                          dateTime={c.last_message_at}
+                        >
+                          {formatListTime(c.last_message_at)}
+                        </time>
+                      )}
+                    </div>
+                    {c.last_message_preview && (
+                      <p className="mt-0.5 line-clamp-1 text-[13px] text-ink-2">
+                        {c.last_message_sender && c.last_message_sender !== "contact" && (
+                          <span className="text-ink-3">
+                            {SENDER_PREFIX[c.last_message_sender]}:{" "}
+                          </span>
+                        )}
+                        {c.last_message_preview}
+                      </p>
                     )}
-                    {c.last_message_preview}
-                  </p>
-                )}
-                <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                  {c.is_urgent && <UrgentPill />}
-                  <StatusPill status={c.status} />
-                  {c.area && <span className="text-xs text-ink-3">{c.area.name}</span>}
-                  <WaitTimer conversation={c} />
-                  {c.assigned_agent && c.status !== "queued" && (
-                    <span className="ml-auto text-xs text-ink-3">{c.assigned_agent.name}</span>
-                  )}
-                </div>
-              </Link>
-            </li>
-          ))}
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      {c.is_urgent && <UrgentPill />}
+                      <StatusPill status={c.status} />
+                      <WaitTimer conversation={c} />
+                      {c.area && (
+                        <span className="truncate text-[11px] text-ink-3">{c.area.name}</span>
+                      )}
+                      {c.assigned_agent && c.status !== "queued" && (
+                        <span className="ml-auto truncate text-[11px] text-ink-3">
+                          {c.assigned_agent.name}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </section>

@@ -76,6 +76,7 @@ def test_full_case_lifecycle(anon, db, lab_agent):
         EventType.INBOUND_MESSAGE,
         EventType.PENDING_RESUMED,
         EventType.CLOSED,
+        EventType.SURVEY_SENT,
     ]
     # Ningún evento guarda texto del paciente ni del agente.
     texts = [m.body for m in db.scalars(select(Message)) if len(m.body) > 3]

@@ -38,9 +38,15 @@ class Settings(BaseSettings):
     whatsapp_phone_number_id: str = ""
     whatsapp_graph_version: str = "v23.0"
     whatsapp_force_dry_run: bool = False
+    # Plantillas aprobadas en Meta (fuera de la ventana de 24 h solo se envían plantillas)
+    whatsapp_template_language: str = "es"
+    whatsapp_csat_template: str = "encuesta_csat"
+    whatsapp_nps_template: str = "encuesta_nps"
 
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.5-flash"
+    copilot_timeout_seconds: float = 15.0
+    copilot_max_messages: int = 20
 
     cron_secret: str = ""
     timezone: str = "America/Caracas"
@@ -49,6 +55,11 @@ class Settings(BaseSettings):
     reopen_window_hours: int = 48
     abandon_after_hours: int = 24
     survey_cooldown_days: int = 30
+    survey_answer_window_hours: int = 72
+    nps_day_of_month: int = 1
+    nps_sample_size: int = 50
+    nps_lookback_days: int = 90
+    nps_cooldown_days: int = 90
     emergency_message: str = DEFAULT_EMERGENCY_MESSAGE
     bot_max_invalid_attempts: int = 3
 

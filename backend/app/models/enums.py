@@ -42,6 +42,18 @@ class MessageStatus(StrEnum):
     NOTE = "note"  # nota interna, nunca sale a WhatsApp
 
 
+class SurveyKind(StrEnum):
+    CSAT = "csat"  # 1–5, al cerrar un caso
+    NPS = "nps"  # 0–10, muestreo mensual a contactos con consentimiento
+
+
+class SurveyStatus(StrEnum):
+    SENT = "sent"
+    ANSWERED = "answered"
+    EXPIRED = "expired"  # el paciente escribió otra cosa o pasó la ventana
+    FAILED = "failed"
+
+
 class EventType(StrEnum):
     CREATED = "created"
     INBOUND_MESSAGE = "inbound_message"

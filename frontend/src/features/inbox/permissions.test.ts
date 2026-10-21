@@ -4,7 +4,7 @@ import { permissionsFor } from "./permissions";
 function conversation(overrides: Partial<ConversationDetail> = {}): ConversationDetail {
   return {
     id: 1,
-    contact: { id: 1, wa_id: "584141234567", name: "María" },
+    contact: { id: 1, wa_id: "584141234567", name: "María", opt_in_at: null },
     area: { id: 2, name: "Laboratorio", sla_first_response_minutes: 15 },
     assigned_agent: { id: 7, name: "Ana" },
     status: "open",
@@ -20,6 +20,7 @@ function conversation(overrides: Partial<ConversationDetail> = {}): Conversation
     contact_reason: null,
     messages: [],
     events: [],
+    surveys: [],
     ...overrides,
   };
 }

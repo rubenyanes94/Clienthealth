@@ -12,4 +12,5 @@ export type ConversationEvent = S["EventOut"];
 export type ConversationStatus = S["ConversationStatus"];
 export type EventType = S["EventType"];
 export type LiveMetrics = S["LiveMetrics"];
+export type Survey = S["SurveyOut"];
 export type InboxFilter = "open" | "queue" | "mine" | "pending" | "closed" | "bot" | "all";

@@ -6,13 +6,14 @@ Los catálogos son provisionales hasta que el centro confirme los definitivos (�
 
 import os
 import sys
+from datetime import date, time
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
 from app.db.session import get_sessionmaker
-from app.models import Agent, Area, ContactReason, FaqEntry
+from app.models import Agent, Area, BusinessHours, ContactReason, FaqEntry, Holiday
 from app.models.enums import AgentRole
 
 AREAS = [
@@ -62,6 +63,38 @@ FAQS = [
 ]
 
 
+# Horario por defecto PROVISIONAL (hora de Caracas): lunes a viernes 7–19, sábado 7–13.
+DEFAULT_HOURS = [(d, time(7), time(19)) for d in range(5)] + [(5, time(7), time(13))]
+
+# Feriados nacionales de Venezuela (Carnaval y Semana Santa varían cada año). A confirmar (§16).
+HOLIDAYS = [
+    (date(2026, 1, 1), "Año Nuevo"),
+    (date(2026, 2, 16), "Carnaval"),
+    (date(2026, 2, 17), "Carnaval"),
+    (date(2026, 4, 2), "Jueves Santo"),
+    (date(2026, 4, 3), "Viernes Santo"),
+    (date(2026, 4, 19), "Declaración de la Independencia"),
+    (date(2026, 5, 1), "Día del Trabajador"),
+    (date(2026, 6, 24), "Batalla de Carabobo"),
+    (date(2026, 7, 5), "Día de la Independencia"),
+    (date(2026, 7, 24), "Natalicio de Simón Bolívar"),
+    (date(2026, 10, 12), "Día de la Resistencia Indígena"),
+    (date(2026, 12, 25), "Navidad"),
+    (date(2027, 1, 1), "Año Nuevo"),
+    (date(2027, 2, 8), "Carnaval"),
+    (date(2027, 2, 9), "Carnaval"),
+    (date(2027, 3, 25), "Jueves Santo"),
+    (date(2027, 3, 26), "Viernes Santo"),
+    (date(2027, 4, 19), "Declaración de la Independencia"),
+    (date(2027, 5, 1), "Día del Trabajador"),
+    (date(2027, 6, 24), "Batalla de Carabobo"),
+    (date(2027, 7, 5), "Día de la Independencia"),
+    (date(2027, 7, 24), "Natalicio de Simón Bolívar"),
+    (date(2027, 10, 12), "Día de la Resistencia Indígena"),
+    (date(2027, 12, 25), "Navidad"),
+]
+
+
 def seed(db: Session, admin_email: str | None, admin_password: str | None) -> None:
     for i, (name, slug, is_default, sla) in enumerate(AREAS):
         if db.scalar(select(Area).where(Area.slug == slug)) is None:
@@ -80,6 +113,13 @@ def seed(db: Session, admin_email: str | None, admin_password: str | None) -> No
     if db.scalar(select(FaqEntry.id).limit(1)) is None:
         for i, (title, answer) in enumerate(FAQS):
             db.add(FaqEntry(title=title, answer=answer, sort_order=i))
+
+    if db.scalar(select(BusinessHours.id).limit(1)) is None:
+        for weekday, opens, closes in DEFAULT_HOURS:
+            db.add(BusinessHours(area_id=None, weekday=weekday, opens_at=opens, closes_at=closes))
+    if db.scalar(select(Holiday.id).limit(1)) is None:
+        for day, name in HOLIDAYS:
+            db.add(Holiday(day=day, name=name))
 
     if admin_email and admin_password:
         email = admin_email.lower()

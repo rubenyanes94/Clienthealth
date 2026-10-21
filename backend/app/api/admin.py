@@ -3,14 +3,14 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import current_agent, require_admin
 from app.core.security import hash_password
 from app.db.session import get_db
-from app.models import Agent, Area, ContactReason, FaqEntry
+from app.models import Agent, Area, BusinessHours, ContactReason, FaqEntry, Holiday
 from app.schemas import (
     AgentIn,
     AgentOut,
@@ -25,6 +25,7 @@ from app.schemas import (
     ReasonOut,
     ReasonPatch,
 )
+from app.schemas.metrics import HolidayIn, HolidayOut, ScheduleIn, ScheduleOut, Slot
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
 catalog_router = APIRouter(prefix="/catalog", tags=["catalog"])
@@ -172,3 +173,57 @@ def patch_agent(agent_id: int, body: AgentPatch, db: Session = Depends(get_db)):
     for key, value in changes.items():
         setattr(agent, key, value)
     return _save(db, agent)
+
+
+# --- Calendario hábil ------------------------------------------------------------------------
+
+
+@router.get("/business-hours", response_model=ScheduleOut)
+def get_schedule(area_id: int | None = None, db: Session = Depends(get_db)):
+    """Horario de un área (o el por defecto si `area_id` se omite)."""
+    rows = db.scalars(
+        select(BusinessHours)
+        .where(
+            BusinessHours.area_id.is_(None) if area_id is None else BusinessHours.area_id == area_id
+        )
+        .order_by(BusinessHours.weekday, BusinessHours.opens_at)
+    ).all()
+    return ScheduleOut(
+        area_id=area_id,
+        inherits_default=area_id is not None and not rows,
+        slots=[Slot(weekday=r.weekday, opens_at=r.opens_at, closes_at=r.closes_at) for r in rows],
+    )
+
+
+@router.put("/business-hours", response_model=ScheduleOut)
+def put_schedule(body: ScheduleIn, area_id: int | None = None, db: Session = Depends(get_db)):
+    """Reemplaza el horario completo. En un área, una lista vacía hereda el horario por defecto."""
+    if area_id is not None:
+        _get(db, Area, area_id)
+    db.execute(
+        delete(BusinessHours).where(
+            BusinessHours.area_id.is_(None) if area_id is None else BusinessHours.area_id == area_id
+        )
+    )
+    for slot in body.slots:
+        db.add(BusinessHours(area_id=area_id, **slot.model_dump()))
+    db.commit()
+    return get_schedule(area_id, db)
+
+
+@router.get("/holidays", response_model=list[HolidayOut])
+def list_holidays(db: Session = Depends(get_db)):
+    return db.scalars(select(Holiday).order_by(Holiday.day)).all()
+
+
+@router.post("/holidays", response_model=HolidayOut, status_code=201)
+def create_holiday(body: HolidayIn, db: Session = Depends(get_db)):
+    holiday = Holiday(**body.model_dump())
+    db.add(holiday)
+    return _save(db, holiday)
+
+
+@router.delete("/holidays/{holiday_id}", status_code=204)
+def delete_holiday(holiday_id: int, db: Session = Depends(get_db)) -> None:
+    db.delete(_get(db, Holiday, holiday_id))
+    db.commit()

@@ -44,6 +44,7 @@ export function formatElapsed(fromIso: string, now: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
+  if (h >= 24) return `${Math.floor(h / 24)} d ${h % 24} h`;
   if (h > 0) return `${h} h ${String(m).padStart(2, "0")} min`;
   return `${m}:${String(s).padStart(2, "0")}`;
 }

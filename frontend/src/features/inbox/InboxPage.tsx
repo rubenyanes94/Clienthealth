@@ -29,22 +29,22 @@ export function InboxPage() {
     me.data?.role !== "agent" && health.data && health.data.environment !== "production";
 
   return (
-    <div className="grid h-full min-h-0 grid-cols-[minmax(0,1fr)] lg:grid-cols-[22rem_minmax(0,1fr)] xl:grid-cols-[22rem_minmax(0,1fr)_19rem]">
+    <div className="grid h-full min-h-0 grid-cols-[minmax(0,1fr)] lg:grid-cols-[23rem_minmax(0,1fr)] xl:grid-cols-[23rem_minmax(0,1fr)_21rem]">
       <div
         className={clsx(
-          "min-h-0 border-line bg-surface lg:border-r",
-          selectedId !== null && "hidden lg:block",
+          "flex min-h-0 flex-col border-line bg-surface lg:border-r",
+          selectedId !== null && "hidden lg:flex",
         )}
       >
-        <div className="flex items-center justify-between px-4 pt-4">
-          <h1 className="text-lg font-semibold">Conversaciones</h1>
+        <div className="flex items-center justify-between px-4 pt-5 pb-4">
+          <h1 className="text-xl font-semibold">Conversaciones</h1>
           {canSimulate && (
-            <Button size="sm" variant="ghost" onClick={() => setSimulator(true)}>
-              <FlaskConical className="size-4" aria-hidden /> Simular
+            <Button size="sm" variant="secondary" onClick={() => setSimulator(true)}>
+              <FlaskConical className="size-3.5" aria-hidden /> Simular
             </Button>
           )}
         </div>
-        <div className="h-[calc(100%-3rem)]">
+        <div className="min-h-0 flex-1">
           <ConversationList
             filter={filter}
             onFilter={(f) => setSearch({ filtro: f })}
@@ -55,8 +55,10 @@ export function InboxPage() {
 
       <div className={clsx("min-h-0", selectedId === null && "hidden lg:block")}>
         {selectedId === null && (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-sm text-ink-3">
-            <MessagesSquare className="size-8" aria-hidden />
+          <div className="flex h-full flex-col items-center justify-center gap-3 bg-surface-2 text-sm text-ink-3">
+            <div className="flex size-12 items-center justify-center rounded-2xl bg-surface shadow-card ring-1 ring-black/5">
+              <MessagesSquare className="size-5 text-ink-2" aria-hidden />
+            </div>
             Seleccione una conversación
           </div>
         )}
@@ -76,20 +78,29 @@ export function InboxPage() {
       </div>
 
       {conversation.data && (
-        <div
-          className={clsx(
-            "min-h-0 border-l border-line bg-surface-2",
-            showInspector
-              ? "fixed inset-y-0 right-0 z-40 w-[min(19rem,100vw)] shadow-pop"
-              : "hidden",
-            "xl:static xl:block xl:w-auto xl:shadow-none",
+        <>
+          {showInspector && (
+            <div
+              className="fixed inset-0 z-30 bg-zinc-950/20 xl:hidden"
+              onClick={() => setShowInspector(false)}
+              aria-hidden
+            />
           )}
-        >
-          <Inspector
-            conversation={conversation.data}
-            canAct={permissionsFor(conversation.data, me.data).canAct}
-          />
-        </div>
+          <div
+            className={clsx(
+              "min-h-0 border-l border-line bg-surface",
+              showInspector
+                ? "fixed inset-y-0 right-0 z-40 w-[min(21rem,92vw)] shadow-pop"
+                : "hidden",
+              "xl:static xl:z-auto xl:block xl:w-auto xl:shadow-none",
+            )}
+          >
+            <Inspector
+              conversation={conversation.data}
+              canAct={permissionsFor(conversation.data, me.data).canAct}
+            />
+          </div>
+        </>
       )}
       <SimulatorDialog open={simulator} onClose={() => setSimulator(false)} />
     </div>

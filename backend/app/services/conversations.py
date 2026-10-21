@@ -13,7 +13,7 @@ from app.models.enums import (
     MessageStatus,
     SenderType,
 )
-from app.services import bot, events, whatsapp
+from app.services import bot, events, surveys, whatsapp
 from app.services.outbound import send_message
 
 ACTIVE_STATUSES = (ConversationStatus.OPEN, ConversationStatus.PENDING)
@@ -230,7 +230,14 @@ def transfer(db: Session, agent: Agent, conversation_id: int, area_id: int) -> C
     return conversation
 
 
-def close(db: Session, agent: Agent, conversation_id: int, contact_reason_id: int) -> Conversation:
+def close(
+    db: Session,
+    agent: Agent,
+    conversation_id: int,
+    contact_reason_id: int,
+    *,
+    send_survey: bool = True,
+) -> Conversation:
     conversation = _lock(db, agent, conversation_id)
     if conversation.status == ConversationStatus.CLOSED:
         raise ConflictError("El caso ya está cerrado")
@@ -251,6 +258,8 @@ def close(db: Session, agent: Agent, conversation_id: int, contact_reason_id: in
         agent=agent,
         data={"by": "agent", "reason_id": reason.id},
     )
+    if send_survey:
+        surveys.maybe_send_csat(db, conversation, agent)
     db.commit()
     return conversation
 

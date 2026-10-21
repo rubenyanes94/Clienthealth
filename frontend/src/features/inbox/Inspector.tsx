@@ -5,22 +5,72 @@ import {
   PauseCircle,
   PlayCircle,
   RotateCcw,
+  Sparkles,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
-import { useConversationActions } from "@/api/hooks";
+import { useContactConsent, useConversationActions, useCopilot } from "@/api/hooks";
 import type { ConversationDetail } from "@/api/types";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { displayPhone, EVENT_LABEL, formatDateTime } from "@/lib/format";
 import { CloseDialog, TransferDialog } from "./CaseActions";
-import { StatusPill, UrgentPill, WaitTimer } from "./bits";
+import { StatusPill, SurveyPill, UrgentPill, WaitTimer } from "./bits";
+
+function Section({
+  title,
+  action,
+  children,
+}: {
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="mb-6">
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="text-[11px] font-semibold tracking-wider text-ink-3 uppercase">{title}</h3>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex justify-between gap-3 py-1.5 text-sm">
+    <div className="flex justify-between gap-3 px-3.5 py-2 text-[13px]">
       <dt className="text-ink-3">{label}</dt>
       <dd className="text-right font-medium">{children}</dd>
+    </div>
+  );
+}
+
+function CopilotSummary({ conversationId }: { conversationId: number }) {
+  const { summary } = useCopilot(conversationId);
+  const toast = useToast();
+  return (
+    <div className="rounded-xl bg-ai-soft p-3.5 ring-1 ring-inset ring-violet-600/10">
+      {summary.data ? (
+        <p className="text-[13px] leading-relaxed whitespace-pre-wrap text-ink">
+          {summary.data.text}
+        </p>
+      ) : (
+        <p className="text-[13px] text-ink-2">
+          Resumen de la conversación para ponerse al día rápido. Los datos del paciente se
+          anonimizan antes de enviarse.
+        </p>
+      )}
+      <Button
+        variant="ai"
+        size="sm"
+        className="mt-3 bg-white"
+        disabled={summary.isPending}
+        onClick={() => summary.mutate(undefined, { onError: (e) => toast.error(e.message) })}
+      >
+        <Sparkles className="size-3.5" aria-hidden />
+        {summary.isPending ? "Resumiendo…" : summary.data ? "Actualizar resumen" : "Resumir"}
+      </Button>
     </div>
   );
 }
@@ -33,6 +83,7 @@ export function Inspector({
   canAct: boolean;
 }) {
   const { simple } = useConversationActions(conversation.id);
+  const consent = useContactConsent(conversation.id);
   const toast = useToast();
   const [dialog, setDialog] = useState<"transfer" | "close" | null>(null);
   const run = (action: "pending" | "resume" | "reopen", ok: string) =>
@@ -44,28 +95,21 @@ export function Inspector({
   const status = conversation.status;
   const active = status === "open" || status === "pending";
   const recent = conversation.events.slice(-6).reverse();
+  const optedIn = Boolean(conversation.contact.opt_in_at);
 
   return (
-    <aside aria-label="Detalle del caso" className="h-full overflow-y-auto p-4">
-      <div className="mb-4 flex flex-wrap items-center gap-1.5">
+    <aside aria-label="Detalle del caso" className="h-full overflow-y-auto p-5">
+      <div className="mb-5 flex flex-wrap items-center gap-1.5">
         {conversation.is_urgent && <UrgentPill />}
         <StatusPill status={status} />
         <WaitTimer conversation={conversation} />
+        {conversation.surveys.map((s) => (
+          <SurveyPill key={s.id} survey={s} />
+        ))}
       </div>
 
-      <dl className="mb-4 divide-y divide-line rounded-card border border-line bg-surface px-3">
-        <Row label="Teléfono">{displayPhone(conversation.contact.wa_id)}</Row>
-        <Row label="Área">{conversation.area?.name ?? "—"}</Row>
-        <Row label="Agente">{conversation.assigned_agent?.name ?? "Sin asignar"}</Row>
-        <Row label="Prioridad">{conversation.priority === "high" ? "Alta" : "Normal"}</Row>
-        <Row label="Abierta">{formatDateTime(conversation.opened_at)}</Row>
-        {conversation.contact_reason && (
-          <Row label="Motivo">{conversation.contact_reason.name}</Row>
-        )}
-      </dl>
-
       {canAct && (
-        <div className="mb-5 grid grid-cols-2 gap-2">
+        <div className="mb-6 grid grid-cols-2 gap-2">
           {status === "open" && (
             <Button size="sm" onClick={() => run("pending", "Caso en espera del paciente")}>
               <PauseCircle className="size-4" aria-hidden /> En espera
@@ -94,26 +138,78 @@ export function Inspector({
         </div>
       )}
 
-      <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-xs font-semibold tracking-wide text-ink-3 uppercase">Actividad</h3>
-        <Link
-          to={`/casos/${conversation.id}`}
-          className="flex items-center gap-1 text-xs font-medium text-brand hover:underline"
-        >
-          Registro completo <ExternalLink className="size-3" aria-hidden />
-        </Link>
-      </div>
-      <ol className="space-y-2">
-        {recent.map((e) => (
-          <li key={e.id} className="text-sm">
-            <div className="font-medium">{EVENT_LABEL[e.type]}</div>
-            <div className="text-xs text-ink-3">
-              {formatDateTime(e.created_at)}
-              {e.agent && ` · ${e.agent.name}`}
-            </div>
-          </li>
-        ))}
-      </ol>
+      <Section title="Copiloto">
+        <CopilotSummary key={conversation.id} conversationId={conversation.id} />
+      </Section>
+
+      <Section title="Caso">
+        <dl className="divide-y divide-line rounded-xl bg-surface ring-1 ring-line ring-inset">
+          <Row label="Teléfono">{displayPhone(conversation.contact.wa_id)}</Row>
+          <Row label="Área">{conversation.area?.name ?? "—"}</Row>
+          <Row label="Agente">{conversation.assigned_agent?.name ?? "Sin asignar"}</Row>
+          <Row label="Prioridad">{conversation.priority === "high" ? "Alta" : "Normal"}</Row>
+          <Row label="Abierta">{formatDateTime(conversation.opened_at)}</Row>
+          {conversation.contact_reason && (
+            <Row label="Motivo">{conversation.contact_reason.name}</Row>
+          )}
+        </dl>
+        <label className="mt-3 flex cursor-pointer items-start gap-2.5 px-1 text-[13px]">
+          <input
+            type="checkbox"
+            className="mt-0.5 size-4 accent-ink"
+            checked={optedIn}
+            disabled={consent.isPending}
+            onChange={(e) =>
+              consent.mutate(
+                { contactId: conversation.contact.id, optIn: e.target.checked },
+                {
+                  onSuccess: () =>
+                    toast.ok(
+                      e.target.checked ? "Consentimiento registrado" : "Consentimiento retirado",
+                    ),
+                  onError: (err) => toast.error(err.message),
+                },
+              )
+            }
+          />
+          <span>
+            <span className="font-medium">Acepta mensajes proactivos</span>
+            <span className="block text-xs text-ink-3">
+              {optedIn
+                ? `Desde ${formatDateTime(conversation.contact.opt_in_at!)}. Puede recibir la encuesta NPS.`
+                : "Márquelo solo si el paciente lo autorizó expresamente."}
+            </span>
+          </span>
+        </label>
+      </Section>
+
+      <Section
+        title="Actividad"
+        action={
+          <Link
+            to={`/casos/${conversation.id}`}
+            className="flex items-center gap-1 text-xs font-medium text-ink-2 hover:text-ink"
+          >
+            Registro completo <ExternalLink className="size-3" aria-hidden />
+          </Link>
+        }
+      >
+        <ol className="relative ml-1 space-y-3 border-l border-line pl-4">
+          {recent.map((e) => (
+            <li key={e.id} className="relative text-[13px]">
+              <span
+                className="absolute top-1.5 -left-[19px] size-1.5 rounded-full bg-ink-3"
+                aria-hidden
+              />
+              <div className="font-medium">{EVENT_LABEL[e.type]}</div>
+              <div className="text-xs text-ink-3">
+                {formatDateTime(e.created_at)}
+                {e.agent && ` · ${e.agent.name}`}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </Section>
 
       <TransferDialog
         conversation={conversation}

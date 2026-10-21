@@ -1,5 +1,5 @@
-import { AlertTriangle, Clock } from "lucide-react";
-import type { ConversationStatus, ConversationSummary } from "@/api/types";
+import { AlertTriangle, Clock, Star } from "lucide-react";
+import type { ConversationStatus, ConversationSummary, Survey } from "@/api/types";
 import { Pill, type Tone } from "@/components/ui/Pill";
 import { formatElapsed, STATUS_LABEL } from "@/lib/format";
 import { useNow } from "@/lib/useNow";
@@ -35,6 +35,30 @@ export function WaitTimer({ conversation }: { conversation: ConversationSummary 
     <Pill tone={tone}>
       <Clock className="size-3" aria-hidden />
       <span className="tabular-nums">{formatElapsed(conversation.queued_at, now)}</span>
+    </Pill>
+  );
+}
+
+function scoreTone(survey: Survey): Tone {
+  const score = survey.score ?? 0;
+  if (survey.kind === "csat") return score >= 4 ? "ok" : score === 3 ? "warn" : "danger";
+  return score >= 9 ? "ok" : score >= 7 ? "warn" : "danger";
+}
+
+export function SurveyPill({ survey }: { survey: Survey }) {
+  const label = survey.kind === "csat" ? "CSAT" : "NPS";
+  if (survey.status === "answered") {
+    return (
+      <Pill tone={scoreTone(survey)}>
+        <Star className="size-3" aria-hidden />
+        {label} {survey.score}/{survey.kind === "csat" ? 5 : 10}
+      </Pill>
+    );
+  }
+  const text = { sent: "enviada", expired: "sin respuesta", failed: "no enviada" }[survey.status];
+  return (
+    <Pill tone={survey.status === "failed" ? "danger" : "neutral"}>
+      {label} {text}
     </Pill>
   );
 }

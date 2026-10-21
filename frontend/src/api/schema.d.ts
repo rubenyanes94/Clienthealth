@@ -279,6 +279,196 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/copilot/{conversation_id}/summary": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Summary */
+    post: operations["summary_api_copilot__conversation_id__summary_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/copilot/{conversation_id}/suggest": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Suggest */
+    post: operations["suggest_api_copilot__conversation_id__suggest_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/copilot/{conversation_id}/rewrite": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Rewrite */
+    post: operations["rewrite_api_copilot__conversation_id__rewrite_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/copilot/{conversation_id}/reason": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Reason */
+    post: operations["reason_api_copilot__conversation_id__reason_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/contacts/{contact_id}/consent": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /**
+     * Set Consent
+     * @description Registra (o retira) el consentimiento para mensajes proactivos, como la NPS.
+     */
+    put: operations["set_consent_api_contacts__contact_id__consent_put"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/metrics/overview": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Overview */
+    get: operations["overview_api_metrics_overview_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/metrics/by-hour": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** By Hour */
+    get: operations["by_hour_api_metrics_by_hour_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/metrics/by-area": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** By Area */
+    get: operations["by_area_api_metrics_by_area_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/metrics/by-agent": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** By Agent */
+    get: operations["by_agent_api_metrics_by_agent_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/metrics/reasons": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Reasons */
+    get: operations["reasons_api_metrics_reasons_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/metrics/csat-daily": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Csat Daily */
+    get: operations["csat_daily_api_metrics_csat_daily_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/admin/areas": {
     parameters: {
       query?: never;
@@ -419,6 +609,65 @@ export interface paths {
     patch: operations["patch_agent_api_admin_agents__agent_id__patch"];
     trace?: never;
   };
+  "/api/admin/business-hours": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get Schedule
+     * @description Horario de un área (o el por defecto si `area_id` se omite).
+     */
+    get: operations["get_schedule_api_admin_business_hours_get"];
+    /**
+     * Put Schedule
+     * @description Reemplaza el horario completo. En un área, una lista vacía hereda el horario por defecto.
+     */
+    put: operations["put_schedule_api_admin_business_hours_put"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/admin/holidays": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Holidays */
+    get: operations["list_holidays_api_admin_holidays_get"];
+    put?: never;
+    /** Create Holiday */
+    post: operations["create_holiday_api_admin_holidays_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/admin/holidays/{holiday_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** Delete Holiday */
+    delete: operations["delete_holiday_api_admin_holidays__holiday_id__delete"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/catalog": {
     parameters: {
       query?: never;
@@ -517,6 +766,21 @@ export interface components {
      * @enum {string}
      */
     AgentRole: "agent" | "supervisor" | "admin";
+    /** AgentRow */
+    AgentRow: {
+      /** Agent Id */
+      agent_id: number;
+      /** Name */
+      name: string;
+      /** Accepted */
+      accepted: number;
+      first_response: components["schemas"]["Durations"];
+      /** Closed */
+      closed: number;
+      resolution_time: components["schemas"]["Durations"];
+      fcr: components["schemas"]["Ratio"];
+      csat: components["schemas"]["CsatSummary"];
+    };
     /** AreaIn */
     AreaIn: {
       /** Name */
@@ -583,6 +847,30 @@ export interface components {
       /** Sla First Response Minutes */
       sla_first_response_minutes: number;
     };
+    /** AreaRow */
+    AreaRow: {
+      /** Conversations */
+      conversations: number;
+      /** Episodes */
+      episodes: number;
+      /** Urgent */
+      urgent: number;
+      first_response: components["schemas"]["Durations"];
+      sla: components["schemas"]["Ratio"];
+      resolution_time: components["schemas"]["Durations"];
+      resolution_rate: components["schemas"]["Ratio"];
+      fcr: components["schemas"]["Ratio"];
+      reopen_rate: components["schemas"]["Ratio"];
+      transfer_rate: components["schemas"]["Ratio"];
+      abandon_rate: components["schemas"]["Ratio"];
+      bot_containment: components["schemas"]["Ratio"];
+      csat: components["schemas"]["CsatSummary"];
+      nps: components["schemas"]["NpsSummary"];
+      /** Area Id */
+      area_id: number | null;
+      /** Name */
+      name: string;
+    };
     /** Catalog */
     Catalog: {
       /** Areas */
@@ -594,6 +882,16 @@ export interface components {
     CloseIn: {
       /** Contact Reason Id */
       contact_reason_id: number;
+      /**
+       * Send Survey
+       * @default true
+       */
+      send_survey: boolean;
+    };
+    /** ContactConsentIn */
+    ContactConsentIn: {
+      /** Opt In */
+      opt_in: boolean;
     };
     /** ContactOut */
     ContactOut: {
@@ -603,6 +901,8 @@ export interface components {
       wa_id: string;
       /** Name */
       name: string | null;
+      /** Opt In At */
+      opt_in_at: string | null;
     };
     /** ConversationDetail */
     ConversationDetail: {
@@ -644,6 +944,10 @@ export interface components {
       messages: components["schemas"]["MessageOut"][];
       /** Events */
       events: components["schemas"]["EventOut"][];
+      /** Surveys */
+      surveys: components["schemas"]["SurveyOut"][];
+      /** Csat Skip Reason */
+      csat_skip_reason?: string | null;
     };
     /**
      * ConversationStatus
@@ -685,6 +989,59 @@ export interface components {
       last_message_preview?: string | null;
       last_message_direction?: components["schemas"]["MessageDirection"] | null;
       last_message_sender?: components["schemas"]["SenderType"] | null;
+    };
+    /** CopilotReason */
+    CopilotReason: {
+      reason: components["schemas"]["ReasonRef"] | null;
+    };
+    /** CopilotRewriteIn */
+    CopilotRewriteIn: {
+      /** Draft */
+      draft: string;
+    };
+    /** CopilotText */
+    CopilotText: {
+      /** Text */
+      text: string;
+    };
+    /** CsatDay */
+    CsatDay: {
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+      /** Responses */
+      responses: number;
+      /** Avg */
+      avg: number | null;
+      /** Satisfied */
+      satisfied: number | null;
+    };
+    /** CsatSummary */
+    CsatSummary: {
+      /** Responses */
+      responses: number;
+      /** Sent */
+      sent: number;
+      response_rate: components["schemas"]["Ratio"];
+      /** Avg */
+      avg: number | null;
+      satisfied: components["schemas"]["Ratio"];
+    };
+    /**
+     * Durations
+     * @description Minutos hábiles.
+     */
+    Durations: {
+      /** Count */
+      count: number;
+      /** Avg */
+      avg: number | null;
+      /** Median */
+      median: number | null;
+      /** P90 */
+      p90: number | null;
     };
     /** EventOut */
     EventOut: {
@@ -783,6 +1140,44 @@ export interface components {
       /** Whatsapp Dry Run */
       whatsapp_dry_run: boolean;
     };
+    /** HolidayIn */
+    HolidayIn: {
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+      /** Name */
+      name: string;
+      /** Area Id */
+      area_id?: number | null;
+    };
+    /** HolidayOut */
+    HolidayOut: {
+      /**
+       * Day
+       * Format: date
+       */
+      day: string;
+      /** Name */
+      name: string;
+      /** Area Id */
+      area_id?: number | null;
+      /** Id */
+      id: number;
+    };
+    /** HourRow */
+    HourRow: {
+      /** Hour */
+      hour: number;
+      /** Inbound Messages */
+      inbound_messages: number;
+      /** Episodes */
+      episodes: number;
+      /** First Response Median */
+      first_response_median: number | null;
+      sla: components["schemas"]["Ratio"];
+    };
     /** InboxChanges */
     InboxChanges: {
       /**
@@ -866,11 +1261,63 @@ export interface components {
      * @enum {string}
      */
     MessageStatus: "received" | "sent" | "delivered" | "read" | "failed" | "simulated" | "note";
+    /** NpsSummary */
+    NpsSummary: {
+      /** Responses */
+      responses: number;
+      /** Promoters */
+      promoters: number;
+      /** Passives */
+      passives: number;
+      /** Detractors */
+      detractors: number;
+      /** Score */
+      score: number | null;
+    };
+    /** OverviewOut */
+    OverviewOut: {
+      /** Conversations */
+      conversations: number;
+      /** Episodes */
+      episodes: number;
+      /** Urgent */
+      urgent: number;
+      first_response: components["schemas"]["Durations"];
+      sla: components["schemas"]["Ratio"];
+      resolution_time: components["schemas"]["Durations"];
+      resolution_rate: components["schemas"]["Ratio"];
+      fcr: components["schemas"]["Ratio"];
+      reopen_rate: components["schemas"]["Ratio"];
+      transfer_rate: components["schemas"]["Ratio"];
+      abandon_rate: components["schemas"]["Ratio"];
+      bot_containment: components["schemas"]["Ratio"];
+      csat: components["schemas"]["CsatSummary"];
+      nps: components["schemas"]["NpsSummary"];
+      /**
+       * Date From
+       * Format: date
+       */
+      date_from: string;
+      /**
+       * Date To
+       * Format: date
+       */
+      date_to: string;
+    };
     /**
      * Priority
      * @enum {string}
      */
     Priority: "normal" | "high";
+    /** Ratio */
+    Ratio: {
+      /** Value */
+      value: number | null;
+      /** Numerator */
+      numerator: number;
+      /** Denominator */
+      denominator: number;
+    };
     /** ReasonIn */
     ReasonIn: {
       /** Name */
@@ -910,6 +1357,31 @@ export interface components {
       /** Name */
       name: string;
     };
+    /** ReasonRow */
+    ReasonRow: {
+      /** Reason Id */
+      reason_id: number | null;
+      /** Name */
+      name: string;
+      /** Count */
+      count: number;
+      /** Share */
+      share: number | null;
+    };
+    /** ScheduleIn */
+    ScheduleIn: {
+      /** Slots */
+      slots: components["schemas"]["Slot"][];
+    };
+    /** ScheduleOut */
+    ScheduleOut: {
+      /** Area Id */
+      area_id: number | null;
+      /** Inherits Default */
+      inherits_default: boolean;
+      /** Slots */
+      slots: components["schemas"]["Slot"][];
+    };
     /**
      * SenderType
      * @enum {string}
@@ -930,6 +1402,47 @@ export interface components {
       /** Text */
       text: string;
     };
+    /** Slot */
+    Slot: {
+      /** Weekday */
+      weekday: number;
+      /**
+       * Opens At
+       * Format: time
+       */
+      opens_at: string;
+      /**
+       * Closes At
+       * Format: time
+       */
+      closes_at: string;
+    };
+    /**
+     * SurveyKind
+     * @enum {string}
+     */
+    SurveyKind: "csat" | "nps";
+    /** SurveyOut */
+    SurveyOut: {
+      /** Id */
+      id: number;
+      kind: components["schemas"]["SurveyKind"];
+      status: components["schemas"]["SurveyStatus"];
+      /** Score */
+      score: number | null;
+      /**
+       * Sent At
+       * Format: date-time
+       */
+      sent_at: string;
+      /** Answered At */
+      answered_at: string | null;
+    };
+    /**
+     * SurveyStatus
+     * @enum {string}
+     */
+    SurveyStatus: "sent" | "answered" | "expired" | "failed";
     /** TransferIn */
     TransferIn: {
       /** Area Id */
@@ -1427,6 +1940,367 @@ export interface operations {
       };
     };
   };
+  summary_api_copilot__conversation_id__summary_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        conversation_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CopilotText"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  suggest_api_copilot__conversation_id__suggest_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        conversation_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CopilotText"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  rewrite_api_copilot__conversation_id__rewrite_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        conversation_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CopilotRewriteIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CopilotText"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  reason_api_copilot__conversation_id__reason_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        conversation_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CopilotReason"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  set_consent_api_contacts__contact_id__consent_put: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        contact_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ContactConsentIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ContactOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  overview_api_metrics_overview_get: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+        area_id?: number | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["OverviewOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  by_hour_api_metrics_by_hour_get: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+        area_id?: number | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HourRow"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  by_area_api_metrics_by_area_get: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+        area_id?: number | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AreaRow"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  by_agent_api_metrics_by_agent_get: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+        area_id?: number | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AgentRow"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  reasons_api_metrics_reasons_get: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+        area_id?: number | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ReasonRow"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  csat_daily_api_metrics_csat_daily_get: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+        area_id?: number | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CsatDay"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   list_areas_api_admin_areas_get: {
     parameters: {
       query?: never;
@@ -1767,6 +2641,154 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["AgentOut"];
         };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  get_schedule_api_admin_business_hours_get: {
+    parameters: {
+      query?: {
+        area_id?: number | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ScheduleOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  put_schedule_api_admin_business_hours_put: {
+    parameters: {
+      query?: {
+        area_id?: number | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ScheduleIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ScheduleOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_holidays_api_admin_holidays_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HolidayOut"][];
+        };
+      };
+    };
+  };
+  create_holiday_api_admin_holidays_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["HolidayIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HolidayOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  delete_holiday_api_admin_holidays__holiday_id__delete: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        holiday_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Validation Error */
       422: {

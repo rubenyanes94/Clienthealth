@@ -11,6 +11,8 @@ from app.models.enums import (
     MessageStatus,
     Priority,
     SenderType,
+    SurveyKind,
+    SurveyStatus,
 )
 
 
@@ -143,6 +145,20 @@ class ContactOut(ORM):
     id: int
     wa_id: str
     name: str | None
+    opt_in_at: datetime | None
+
+
+class ContactConsentIn(BaseModel):
+    opt_in: bool
+
+
+class SurveyOut(ORM):
+    id: int
+    kind: SurveyKind
+    status: SurveyStatus
+    score: int | None
+    sent_at: datetime
+    answered_at: datetime | None
 
 
 class MessageOut(ORM):
@@ -191,6 +207,8 @@ class ConversationDetail(ConversationSummary):
     contact_reason: ReasonRef | None
     messages: list[MessageOut]
     events: list[EventOut]
+    surveys: list[SurveyOut]
+    csat_skip_reason: str | None = None
 
 
 class InboxPage(BaseModel):
@@ -214,6 +232,19 @@ class TransferIn(BaseModel):
 
 class CloseIn(BaseModel):
     contact_reason_id: int
+    send_survey: bool = True
+
+
+class CopilotText(BaseModel):
+    text: str
+
+
+class CopilotRewriteIn(BaseModel):
+    draft: str = Field(min_length=1, max_length=4096)
+
+
+class CopilotReason(BaseModel):
+    reason: ReasonRef | None
 
 
 class LiveMetrics(BaseModel):

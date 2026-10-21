@@ -29,6 +29,18 @@ def within_service_window(last_inbound_at: datetime | None, now: datetime) -> bo
 
 
 def send_text(to: str, body: str) -> SendResult:
+    return _post({"to": to, "type": "text", "text": {"body": body, "preview_url": False}})
+
+
+def send_template(to: str, name: str) -> SendResult:
+    """Plantilla aprobada en Meta, sin parámetros (no lleva datos del paciente)."""
+    language = get_settings().whatsapp_template_language
+    return _post(
+        {"to": to, "type": "template", "template": {"name": name, "language": {"code": language}}}
+    )
+
+
+def _post(message: dict) -> SendResult:
     settings = get_settings()
     if settings.whatsapp_dry_run:
         return SendResult(external_id=f"sim-{uuid4().hex}", status=MessageStatus.SIMULATED)
@@ -37,13 +49,7 @@ def send_text(to: str, body: str) -> SendResult:
         f"https://graph.facebook.com/{settings.whatsapp_graph_version}/"
         f"{settings.whatsapp_phone_number_id}/messages"
     )
-    payload = {
-        "messaging_product": "whatsapp",
-        "recipient_type": "individual",
-        "to": to,
-        "type": "text",
-        "text": {"body": body, "preview_url": False},
-    }
+    payload = {"messaging_product": "whatsapp", "recipient_type": "individual", **message}
     try:
         response = httpx.post(
             url,
