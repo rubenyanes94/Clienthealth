@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: atencion
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U app" --health-interval 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://app:app@localhost:5432/atencion
+      TEST_DATABASE_URL: postgresql+psycopg://app:app@localhost:5432/atencion_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: backend/.python-version
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - run: ruff format --check .
+      - name: Las migraciones aplican sobre una base vacía (y se revierten)
+        run: |
+          alembic upgrade head
+          alembic check
+          alembic downgrade base
+      - run: psql postgresql://app:app@localhost:5432/atencion -c "CREATE DATABASE atencion_test"
+      - run: pytest -q
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npx tsc -b --noEmit
+      - run: npm test
+      - run: npm run build
+
+  api-types:
+    name: Tipos de la API sincronizados
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: backend/.python-version
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: pip install -e ./backend
+      - run: cd backend && python -m scripts.dump_openapi > ../openapi.json
+      - run: cd frontend && npm ci && API_SCHEMA_URL=../openapi.json npm run gen:api
+      - name: Falla si schema.d.ts no está regenerado
+        run: git diff --exit-code frontend/src/api/schema.d.ts

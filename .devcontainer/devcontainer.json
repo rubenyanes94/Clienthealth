@@ -1,0 +1,27 @@
+{
+  "name": "Atención al Paciente",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "22" }
+  },
+  "forwardPorts": [3000, 5173, 8000],
+  "portsAttributes": {
+    "5173": { "label": "web (Vite)" },
+    "8000": { "label": "api (FastAPI)" },
+    "3000": { "label": "vercel dev" }
+  },
+  "postCreateCommand": "cd backend && python -m venv .venv && .venv/bin/pip install -e '.[dev]' && cd ../frontend && npm ci",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "charliermarsh.ruff",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss"
+      ]
+    }
+  }
+}
