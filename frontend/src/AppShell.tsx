@@ -13,11 +13,11 @@ import { useInboxChanges, useLiveMetrics, useLogout, useMe } from "@/api/hooks";
 import { Avatar } from "@/components/ui/Avatar";
 
 const NAV = [
-  { to: "/conversaciones", label: "Conversaciones", icon: MessagesSquare },
-  { to: "/casos", label: "Casos", icon: ClipboardList },
-  { to: "/paneles", label: "Paneles", icon: BarChart3 },
-  { to: "/informes", label: "Informes", icon: FileText },
-  { to: "/contactos", label: "Contactos", icon: Users },
+  { to: "/conversaciones", label: "Conversaciones", icon: MessagesSquare, supervisor: false },
+  { to: "/casos", label: "Casos", icon: ClipboardList, supervisor: false },
+  { to: "/paneles", label: "Paneles", icon: BarChart3, supervisor: true },
+  { to: "/informes", label: "Informes", icon: FileText, supervisor: true },
+  { to: "/contactos", label: "Contactos", icon: Users, supervisor: false },
 ];
 
 const ROLE_LABEL: Record<string, string> = {
@@ -48,35 +48,37 @@ export function AppShell() {
           </div>
         </div>
         <ul className="flex flex-1 justify-around md:flex-none md:flex-col md:gap-0.5 md:px-3">
-          {NAV.map(({ to, label, icon: Icon }) => (
-            <li key={to}>
-              <NavLink
-                to={to}
-                className={({ isActive }) =>
-                  clsx(
-                    "group flex flex-col items-center gap-0.5 px-3 py-2 text-[11px] font-medium transition md:flex-row md:gap-3 md:rounded-lg md:text-sm",
-                    isActive
-                      ? "text-ink md:bg-surface-3"
-                      : "text-ink-3 hover:text-ink md:hover:bg-surface-2",
-                  )
-                }
-              >
-                <Icon className="size-5 md:size-4" aria-hidden />
-                <span>{label}</span>
-                {to === "/conversaciones" && live.data && live.data.queued > 0 && (
-                  <span
-                    title="Casos en cola"
-                    className={clsx(
-                      "ml-auto hidden min-w-5 rounded-full px-1.5 text-center text-[11px] leading-5 font-semibold tabular-nums md:inline",
-                      live.data.urgent_queued > 0 ? "bg-danger text-white" : "bg-ink text-white",
-                    )}
-                  >
-                    {live.data.queued}
-                  </span>
-                )}
-              </NavLink>
-            </li>
-          ))}
+          {NAV.filter((item) => !item.supervisor || me.data?.role !== "agent").map(
+            ({ to, label, icon: Icon }) => (
+              <li key={to}>
+                <NavLink
+                  to={to}
+                  className={({ isActive }) =>
+                    clsx(
+                      "group flex flex-col items-center gap-0.5 px-3 py-2 text-[11px] font-medium transition md:flex-row md:gap-3 md:rounded-lg md:text-sm",
+                      isActive
+                        ? "text-ink md:bg-surface-3"
+                        : "text-ink-3 hover:text-ink md:hover:bg-surface-2",
+                    )
+                  }
+                >
+                  <Icon className="size-5 md:size-4" aria-hidden />
+                  <span>{label}</span>
+                  {to === "/conversaciones" && live.data && live.data.queued > 0 && (
+                    <span
+                      title="Casos en cola"
+                      className={clsx(
+                        "ml-auto hidden min-w-5 rounded-full px-1.5 text-center text-[11px] leading-5 font-semibold tabular-nums md:inline",
+                        live.data.urgent_queued > 0 ? "bg-danger text-white" : "bg-ink text-white",
+                      )}
+                    >
+                      {live.data.queued}
+                    </span>
+                  )}
+                </NavLink>
+              </li>
+            ),
+          )}
         </ul>
 
         {live.data && (
