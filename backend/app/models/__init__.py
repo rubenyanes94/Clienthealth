@@ -1,4 +1,4 @@
-from app.models.conversation import Contact, Conversation, ConversationEvent, Message
+from app.models.conversation import Contact, Conversation, ConversationEvent, Message, Survey
 from app.models.org import Agent, Area, ContactReason, FaqEntry
 
 __all__ = [
@@ -10,4 +10,5 @@ __all__ = [
     "ConversationEvent",
     "FaqEntry",
     "Message",
+    "Survey",
 ]

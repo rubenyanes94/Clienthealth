@@ -12,6 +12,8 @@ from app.models.enums import (
     MessageStatus,
     Priority,
     SenderType,
+    SurveyKind,
+    SurveyStatus,
 )
 from app.models.org import Agent, Area, ContactReason, enum_col
 
@@ -22,7 +24,9 @@ class Contact(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     wa_id: Mapped[str] = mapped_column(String(32), unique=True)
     name: Mapped[str | None] = mapped_column(String(255))
+    # Consentimiento para mensajes proactivos (NPS). Lo registra un agente.
     opt_in_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    opt_in_by_agent_id: Mapped[int | None] = mapped_column(ForeignKey("agents.id"))
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
 
@@ -68,6 +72,7 @@ class Conversation(Base):
         back_populates="conversation", order_by="Message.id"
     )
     events: Mapped[list["ConversationEvent"]] = relationship(order_by="ConversationEvent.id")
+    surveys: Mapped[list["Survey"]] = relationship(order_by="Survey.id")
 
     def touch(self) -> None:
         """Marca un cambio para que el polling de /inbox/changes lo detecte."""
@@ -119,3 +124,24 @@ class ConversationEvent(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
     agent: Mapped[Agent | None] = relationship()
+
+
+class Survey(Base):
+    """Una encuesta enviada (CSAT o NPS) y, si llegó, su respuesta. Solo guarda la puntuación."""
+
+    __tablename__ = "surveys"
+    __table_args__ = (
+        Index("ix_surveys_contact_sent", "contact_id", "sent_at"),
+        Index("ix_surveys_kind_sent", "kind", "sent_at"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    conversation_id: Mapped[int] = mapped_column(ForeignKey("conversations.id"))
+    contact_id: Mapped[int] = mapped_column(ForeignKey("contacts.id"))
+    agent_id: Mapped[int | None] = mapped_column(ForeignKey("agents.id"))
+    kind: Mapped[SurveyKind] = mapped_column(enum_col(SurveyKind, "survey_kind"))
+    status: Mapped[SurveyStatus] = mapped_column(enum_col(SurveyStatus, "survey_status"))
+    message_id: Mapped[int | None] = mapped_column(ForeignKey("messages.id"))
+    score: Mapped[int | None] = mapped_column(Integer)
+    sent_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    answered_at: Mapped[datetime | None] = mapped_column(UTCDateTime)

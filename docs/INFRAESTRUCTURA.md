@@ -165,10 +165,11 @@ transacción. Sin evento, la acción no cuenta en los indicadores.
 | `POST /conversations/{id}/messages` | Responder (`is_internal_note` para notas internas) |
 | `POST /conversations/{id}/pending` · `/resume` | Pausar y reanudar hitos (esperando al paciente) |
 | `POST /conversations/{id}/transfer` | Cambiar de área (vuelve a cola) |
-| `POST /conversations/{id}/close` | Cerrar: `contact_reason_id` obligatorio (+ CSAT en fase 2) |
+| `POST /conversations/{id}/close` | Cerrar: `contact_reason_id` obligatorio + `send_survey` (CSAT) |
 | `POST /conversations/{id}/reopen` | Reabrir |
 | `GET /catalog` | Áreas y motivos activos (cualquier agente; para transferir y cerrar) |
-| `POST /copilot/{id}/summary` · `/suggest` · `/rewrite` · `/reason` | Copiloto Gemini (fase 2) |
+| `POST /copilot/{id}/summary` · `/suggest` · `/rewrite` · `/reason` | Copiloto Gemini |
+| `PUT /contacts/{id}/consent` | Registrar o retirar el consentimiento para mensajes proactivos (NPS) |
 | `GET /metrics/overview?from=&to=` · `/by-hour` · `/by-agent` · `/by-area` · `/reasons` · `/csat-daily` | Paneles (fase 3) |
 | `GET /metrics/live` | Cola, urgentes, espera más antigua, agentes conectados |
 | `GET/POST/PATCH /admin/areas` · `/admin/reasons` · `/admin/faqs` · `/admin/agents` | Catálogos (rol admin) |
@@ -185,7 +186,9 @@ transacción. Sin evento, la acción no cuenta en los indicadores.
 3. Mensaje entrante: buscar o crear el `Contact` y la conversación abierta, o abrir una nueva. Si la
    última se cerró hace menos de `reopen_window_hours`, **reabrirla** y registrar `REOPENED`. Después
    ejecutar el clasificador de urgencia y luego el flujo del bot.
-4. Respuesta a encuesta (botón o número): crear `SurveyResponse` y registrar `SURVEY_ANSWERED` (fase 2).
+4. Respuesta a encuesta (botón, número o estrellas): se completa el `Survey` pendiente y se registra
+   `SURVEY_ANSWERED`, **sin reabrir** el caso. Solo cuenta si el paciente no tiene otra conversación
+   activa; cualquier otro mensaje vence la encuesta (así un "5" del menú del bot nunca es una nota).
 5. Estados (`sent`, `delivered`, `read`, `failed`): actualizar `Message.status` (solo hacia adelante;
    `failed` siempre se aplica).
 6. Envíos salientes: respetar la ventana de 24 h. Fuera de ella solo se envían **plantillas
@@ -313,6 +316,11 @@ Los endpoints `/api/cron/*` exigen `Authorization: Bearer ${CRON_SECRET}` y son 
 | `WHATSAPP_PHONE_NUMBER_ID` | Manual (solo prod) | |
 | `WHATSAPP_GRAPH_VERSION` | Opcional | Por defecto `v23.0` |
 | `WHATSAPP_FORCE_DRY_RUN` | Opcional | `true` fuerza simulación aunque haya credenciales |
+| `WHATSAPP_CSAT_TEMPLATE` · `WHATSAPP_NPS_TEMPLATE` | Opcional | Nombres de las plantillas aprobadas (`encuesta_csat`, `encuesta_nps`) |
+| `WHATSAPP_TEMPLATE_LANGUAGE` | Opcional | Por defecto `es` |
+| `SURVEY_COOLDOWN_DAYS` · `SURVEY_ANSWER_WINDOW_HOURS` | Opcional | 30 días entre CSAT al mismo paciente · 72 h para responder |
+| `NPS_DAY_OF_MONTH` · `NPS_SAMPLE_SIZE` | Opcional | Día del mes (hora de Caracas) y tamaño de la muestra (1 y 50) |
+| `COPILOT_TIMEOUT_SECONDS` | Opcional | Por defecto 15 |
 | `EMERGENCY_MESSAGE` | Opcional | Texto oficial de Emergencia (pendiente de aprobación, §16) |
 | `GEMINI_API_KEY` | Manual | |
 | `GEMINI_MODEL` | Opcional | Por defecto `gemini-2.5-flash` |
@@ -385,9 +393,11 @@ Cada fase termina con sus pruebas en verde y un deploy de preview funcionando.
 - ✔ Criterio verificado: un mensaje simulado entra por el webhook, aparece en la bandeja y un agente
   lo acepta, responde y cierra, con los eventos completos.
 
-**Fase 2 — Encuestas y copiloto**
-- CSAT al cierre (plantilla, cooldown, captura de la respuesta) y NPS mensual por muestreo.
-- Endpoints del copiloto con seudonimización y su panel en el frontend.
+**Fase 2 — Encuestas y copiloto** ✅
+- CSAT al cierre (plantilla, cooldown, captura de la respuesta) y NPS mensual por muestreo entre
+  contactos con consentimiento.
+- Copiloto: resumen, sugerir respuesta, mejorar redacción y sugerir motivo, con seudonimización.
+- Rediseño: tema claro (fondo blanco, texto negro), tipografía Inter y componentes refinados.
 
 **Fase 3 — Indicadores**
 - `docs/METRICAS.md` con la fórmula exacta de cada KPI: 1ª respuesta, SLA, CSAT, NPS, FCR, contención
@@ -452,3 +462,27 @@ Diferencias con la versión original de este documento y su motivo:
    se deriva a la cola (`BOT_ESCALATED {reason: "bot_error"}`) para que un humano la vea.
 7. **TypeScript 5.9** en lugar de 7.x: typescript-eslint y openapi-typescript aún no admiten la 7.
 8. **Pendiente de Fase 0**: validar el deploy de preview en Vercel (requiere la cuenta del proyecto).
+
+## 18. Notas de implementación (fase 2)
+
+1. **Modelo `Survey`** (en lugar de `SurveyResponse`): una fila por encuesta enviada, con su estado
+   (`sent`, `answered`, `expired`, `failed`) y solo la puntuación. Nunca se guarda texto libre.
+2. **CSAT**: se envía dentro de `POST /close` como plantilla (`encuesta_csat`, sin parámetros) salvo que
+   el agente lo desmarque, el caso haya sido **urgente** (no se pide calificación tras una emergencia)
+   o el paciente haya recibido otra CSAT en los últimos `SURVEY_COOLDOWN_DAYS`. El detalle del caso
+   expone `csat_skip_reason` para que el diálogo de cierre lo diga de antemano.
+3. **NPS**: `daily-rollup` la envía el `NPS_DAY_OF_MONTH` (hora de Caracas) a una muestra aleatoria de
+   contactos con `opt_in_at`, sin conversación activa, con un caso cerrado en los últimos 90 días y sin
+   NPS en los últimos 90 días. Idempotente: si ya salió alguna NPS ese mes, no hace nada.
+4. **Consentimiento**: lo registra el agente desde el inspector (`PUT /contacts/{id}/consent`), con
+   fecha y agente. Sin consentimiento no hay NPS.
+5. **Copiloto**: antes de llamar a Gemini se reemplazan nombre (sin importar acentos), cédulas,
+   teléfonos/números largos y correos por `[PACIENTE]`, `[CÉDULA]`, `[NÚMERO]` y `[CORREO]`. Las notas
+   internas no se envían. En las propuestas de respuesta, `[PACIENTE]` vuelve al nombre de pila **en el
+   servidor**, solo para el agente. Los errores se registran solo con su tipo. Sin `GEMINI_API_KEY` los
+   endpoints responden 503 con un mensaje claro.
+6. **Pendiente con el centro**: crear y aprobar en Meta las plantillas `encuesta_csat` (botones 1–5) y
+   `encuesta_nps` (0–10), y definir el texto de consentimiento que el agente lee al paciente.
+7. **Tema**: se retiró el modo oscuro automático; la app es siempre clara (fondo blanco, texto negro),
+   como pidió el centro. Los colores quedan solo para estados (urgente, cola, espera, encuestas) y el
+   violeta identifica lo que hace el copiloto.

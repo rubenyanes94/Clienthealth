@@ -62,8 +62,14 @@ def test_cron_requires_secret_and_is_idempotent(anon, db):
 
     assert anon.get("/api/cron/daily-rollup").status_code == 401
     headers = {"Authorization": "Bearer test-cron-secret"}
-    assert anon.get("/api/cron/daily-rollup", headers=headers).json() == {"abandoned_marked": 1}
-    assert anon.get("/api/cron/daily-rollup", headers=headers).json() == {"abandoned_marked": 0}
+    assert anon.get("/api/cron/daily-rollup", headers=headers).json() == {
+        "abandoned_marked": 1,
+        "nps_sent": 0,
+    }
+    assert anon.get("/api/cron/daily-rollup", headers=headers).json() == {
+        "abandoned_marked": 0,
+        "nps_sent": 0,
+    }
     count = db.scalar(
         select(func.count())
         .select_from(ConversationEvent)

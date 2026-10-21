@@ -133,13 +133,8 @@ export function useConversationActions(id: number) {
   });
 
   const close = useMutation({
-    mutationFn: (contact_reason_id: number) =>
-      unwrap(
-        api.POST("/api/conversations/{conversation_id}/close", {
-          ...path,
-          body: { contact_reason_id },
-        }),
-      ),
+    mutationFn: (body: { contact_reason_id: number; send_survey: boolean }) =>
+      unwrap(api.POST("/api/conversations/{conversation_id}/close", { ...path, body })),
     onSuccess: refresh,
   });
 
@@ -180,5 +175,39 @@ export function useHealth() {
     queryKey: ["health"],
     queryFn: () => unwrap(api.GET("/api/health")),
     staleTime: 60_000,
+  });
+}
+
+/** Copiloto: el resultado siempre lo revisa el agente antes de usarlo. */
+export function useCopilot(id: number) {
+  const path = { params: { path: { conversation_id: id } } };
+  return {
+    summary: useMutation({
+      mutationFn: () => unwrap(api.POST("/api/copilot/{conversation_id}/summary", path)),
+    }),
+    suggest: useMutation({
+      mutationFn: () => unwrap(api.POST("/api/copilot/{conversation_id}/suggest", path)),
+    }),
+    rewrite: useMutation({
+      mutationFn: (draft: string) =>
+        unwrap(api.POST("/api/copilot/{conversation_id}/rewrite", { ...path, body: { draft } })),
+    }),
+    reason: useMutation({
+      mutationFn: () => unwrap(api.POST("/api/copilot/{conversation_id}/reason", path)),
+    }),
+  };
+}
+
+export function useContactConsent(conversationId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ contactId, optIn }: { contactId: number; optIn: boolean }) =>
+      unwrap(
+        api.PUT("/api/contacts/{contact_id}/consent", {
+          params: { path: { contact_id: contactId } },
+          body: { opt_in: optIn },
+        }),
+      ),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.conversation(conversationId) }),
   });
 }

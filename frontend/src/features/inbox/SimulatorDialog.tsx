@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { useSimulateInbound } from "@/api/hooks";
 import { Button } from "@/components/ui/Button";
-import { Sheet } from "@/components/ui/Sheet";
+import { fieldClass, Sheet } from "@/components/ui/Sheet";
 import { useToast } from "@/components/ui/Toast";
 
-const inputClass =
-  "h-10 w-full rounded-lg border border-line bg-surface-2 px-3 text-sm outline-none focus:border-brand";
+const inputClass = fieldClass;
 
 /** Solo fuera de producción: inyecta un mensaje con el formato del webhook de Meta. */
 export function SimulatorDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -16,10 +15,15 @@ export function SimulatorDialog({ open, onClose }: { open: boolean; onClose: () 
   const [text, setText] = useState("Hola, buenos días");
 
   return (
-    <Sheet open={open} onClose={onClose} title="Simular mensaje de WhatsApp">
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title="Simular mensaje de WhatsApp"
+      description="Solo fuera de producción. Entra por el mismo flujo que un mensaje real de Meta."
+    >
       <div className="space-y-3">
         <div>
-          <label className="mb-1 block text-sm font-medium" htmlFor="sim-phone">
+          <label className="mb-1.5 block text-sm font-medium" htmlFor="sim-phone">
             Número (wa_id)
           </label>
           <input
@@ -30,7 +34,7 @@ export function SimulatorDialog({ open, onClose }: { open: boolean; onClose: () 
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium" htmlFor="sim-name">
+          <label className="mb-1.5 block text-sm font-medium" htmlFor="sim-name">
             Nombre del perfil
           </label>
           <input
@@ -41,13 +45,13 @@ export function SimulatorDialog({ open, onClose }: { open: boolean; onClose: () 
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium" htmlFor="sim-text">
+          <label className="mb-1.5 block text-sm font-medium" htmlFor="sim-text">
             Mensaje
           </label>
           <textarea
             id="sim-text"
             rows={3}
-            className="w-full rounded-lg border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-brand"
+            className={`${fieldClass} h-auto py-2`}
             value={text}
             onChange={(e) => setText(e.target.value)}
           />

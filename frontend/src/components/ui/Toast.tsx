@@ -30,8 +30,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={toast.id}
             role="status"
             className={clsx(
-              "pointer-events-auto max-w-sm rounded-lg px-4 py-2.5 text-sm shadow-pop",
-              toast.tone === "ok" ? "bg-ink text-surface" : "bg-danger text-white",
+              "pointer-events-auto max-w-sm rounded-xl px-4 py-2.5 text-sm font-medium shadow-pop",
+              toast.tone === "ok" ? "bg-ink text-white" : "bg-danger text-white",
             )}
           >
             {toast.message}

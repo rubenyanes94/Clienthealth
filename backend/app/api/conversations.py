@@ -4,22 +4,32 @@ from sqlalchemy.orm import Session
 from app.api.deps import current_agent
 from app.db.session import get_db
 from app.models import Agent, Conversation
+from app.models.enums import ConversationStatus
 from app.schemas import CloseIn, ConversationDetail, MessageIn, MessageOut, TransferIn
 from app.services import conversations as svc
+from app.services import surveys
 
 router = APIRouter(prefix="/conversations", tags=["conversations"])
 
 
 def detail(db: Session, conversation: Conversation) -> ConversationDetail:
     db.refresh(conversation)
-    return ConversationDetail.model_validate(conversation)
+    return to_detail(db, conversation)
+
+
+def to_detail(db: Session, conversation: Conversation) -> ConversationDetail:
+    out = ConversationDetail.model_validate(conversation)
+    if conversation.status != ConversationStatus.CLOSED:
+        # Para que el diálogo de cierre diga de antemano si saldrá la encuesta.
+        out.csat_skip_reason = surveys.csat_skip_reason(db, conversation)
+    return out
 
 
 @router.get("/{conversation_id}", response_model=ConversationDetail)
 def get_conversation(
     conversation_id: int, agent: Agent = Depends(current_agent), db: Session = Depends(get_db)
 ) -> ConversationDetail:
-    return ConversationDetail.model_validate(svc.get_visible(db, agent, conversation_id))
+    return to_detail(db, svc.get_visible(db, agent, conversation_id))
 
 
 @router.post("/{conversation_id}/accept", response_model=ConversationDetail)
@@ -65,7 +75,7 @@ def transfer(
     conversation = svc.transfer(db, agent, conversation_id, body.area_id)
     db.refresh(conversation)
     # Tras transferir, un agente de otra área puede dejar de ver el caso.
-    return ConversationDetail.model_validate(conversation)
+    return to_detail(db, conversation)
 
 
 @router.post("/{conversation_id}/close", response_model=ConversationDetail)
@@ -75,7 +85,10 @@ def close(
     agent: Agent = Depends(current_agent),
     db: Session = Depends(get_db),
 ) -> ConversationDetail:
-    return detail(db, svc.close(db, agent, conversation_id, body.contact_reason_id))
+    conversation = svc.close(
+        db, agent, conversation_id, body.contact_reason_id, send_survey=body.send_survey
+    )
+    return detail(db, conversation)
 
 
 @router.post("/{conversation_id}/reopen", response_model=ConversationDetail)

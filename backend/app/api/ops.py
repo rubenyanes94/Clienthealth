@@ -14,7 +14,7 @@ from app.db.session import get_db
 from app.models import Agent, Conversation, ConversationEvent
 from app.models.enums import ConversationStatus, EventType
 from app.schemas import HealthOut, LiveMetrics, SimulateInboundIn
-from app.services import events, inbound
+from app.services import events, inbound, surveys
 
 router = APIRouter(tags=["ops"])
 
@@ -116,7 +116,7 @@ def daily_rollup(
     authorization: str | None = Header(default=None), db: Session = Depends(get_db)
 ) -> dict[str, int]:
     _require_cron(authorization)
-    return {"abandoned_marked": mark_abandoned(db)}
+    return {"abandoned_marked": mark_abandoned(db), "nps_sent": surveys.run_monthly_nps(db)}
 
 
 @router.post("/dev/simulate-inbound", status_code=202)

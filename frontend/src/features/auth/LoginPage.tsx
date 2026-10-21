@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useSearchParams } from "react-router";
 import { HeartPulse } from "lucide-react";
 import { useLogin, useMe } from "@/api/hooks";
 import { Button } from "@/components/ui/Button";
+import { fieldClass } from "@/components/ui/Sheet";
 
 export function LoginPage() {
   const me = useMe();
@@ -21,22 +22,19 @@ export function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-dvh items-center justify-center px-4">
-      <form
-        onSubmit={submit}
-        className="w-full max-w-sm rounded-card border border-line bg-surface p-6 shadow-card"
-      >
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-brand text-brand-ink">
+    <main className="flex min-h-dvh items-center justify-center bg-surface-2 px-4">
+      <form onSubmit={submit} className="w-full max-w-sm rounded-2xl bg-surface p-8 shadow-pop">
+        <div className="mb-8">
+          <div className="mb-5 flex size-11 items-center justify-center rounded-xl bg-ink text-white shadow-card">
             <HeartPulse className="size-5" aria-hidden />
           </div>
-          <div>
-            <h1 className="text-base font-semibold leading-tight">Atención al Paciente</h1>
-            <p className="text-sm text-ink-3">Centro Médico San Bernardino</p>
-          </div>
+          <h1 className="text-xl font-semibold">Atención al Paciente</h1>
+          <p className="mt-1 text-sm text-ink-3">
+            Centro Médico San Bernardino · Ingrese con su cuenta
+          </p>
         </div>
 
-        <label className="mb-1 block text-sm font-medium" htmlFor="email">
+        <label className="mb-1.5 block text-sm font-medium" htmlFor="email">
           Correo
         </label>
         <input
@@ -46,9 +44,9 @@ export function LoginPage() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mb-4 h-10 w-full rounded-lg border border-line bg-surface-2 px-3 text-sm outline-none focus:border-brand"
+          className={`mb-4 ${fieldClass}`}
         />
-        <label className="mb-1 block text-sm font-medium" htmlFor="password">
+        <label className="mb-1.5 block text-sm font-medium" htmlFor="password">
           Contraseña
         </label>
         <input
@@ -58,14 +56,14 @@ export function LoginPage() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="mb-4 h-10 w-full rounded-lg border border-line bg-surface-2 px-3 text-sm outline-none focus:border-brand"
+          className={`mb-4 ${fieldClass}`}
         />
         {login.error && (
           <p role="alert" className="mb-4 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">
             {login.error.message}
           </p>
         )}
-        <Button type="submit" variant="primary" className="w-full" disabled={login.isPending}>
+        <Button type="submit" variant="primary" className="mt-2 w-full" disabled={login.isPending}>
           {login.isPending ? "Entrando…" : "Entrar"}
         </Button>
       </form>

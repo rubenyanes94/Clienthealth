@@ -19,7 +19,7 @@ from app.models.enums import (
     Priority,
     SenderType,
 )
-from app.services import bot, events, urgency
+from app.services import bot, events, surveys, urgency
 from app.services.outbound import send_message
 
 logger = logging.getLogger(__name__)
@@ -155,6 +155,9 @@ def handle_inbound_message(db: Session, payload: dict[str, Any], profile_name: s
     now = utcnow()
     try:
         contact = _get_or_create_contact(db, wa_id, profile_name)
+        if surveys.capture_answer(db, contact, text, kind, wamid):
+            db.commit()
+            return
         conversation = _find_or_open_conversation(db, contact)
         message = Message(
             conversation_id=conversation.id,
