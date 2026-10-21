@@ -340,6 +340,14 @@ En local: `vercel env pull .env` o copiar `.env.example`. **Nunca** se suben `.e
 | Preview | Cada PR (Vercel Git) | Rama de Neon del PR | Simulación |
 | Producción | Merge a `main` | Rama principal de Neon | Real |
 
+**Codespace** (`.devcontainer/`): al crearlo, `post-create.sh` instala las dependencias (recrea el
+`.venv`), genera `backend/.env` con secretos aleatorios, migra y carga el seed y los datos de
+demostración. Cada vez que arranca, `start.sh` migra y levanta la API (:8000) y la web (:5173) en
+segundo plano, con logs en `/tmp/atencion/`. El admin se toma de los secretos de Codespaces
+`ADMIN_EMAIL`/`ADMIN_PASSWORD`, o `admin@local.test`/`admin12345` si no están definidos.
+El `docker-compose.yml` de `.devcontainer/` es obligatorio: sin él, Codespaces abre un contenedor de
+recuperación sin Postgres ni Node.
+
 **GitHub Actions** (`ci.yml`, en cada PR):
 
 1. Backend: `ruff check`, `ruff format --check`, `alembic upgrade head` + `alembic check` +

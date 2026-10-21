@@ -6,6 +6,10 @@ services:
       - ../..:/workspaces:cached
     # Comparte la red con db: Postgres queda en localhost:5432, igual que fuera del contenedor.
     network_mode: service:db
+    # Los comandos de arranque migran la base: esperar a que acepte conexiones.
+    depends_on:
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:16-alpine
@@ -17,6 +21,11 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ../scripts/create-test-db.sql:/docker-entrypoint-initdb.d/create-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d atencion"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
 
 volumes:
   pgdata:

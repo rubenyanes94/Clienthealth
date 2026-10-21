@@ -6,6 +6,9 @@ léelo antes de cambiar algo estructural. Las reglas de §15 son obligatorias.
 
 ## Comandos
 
+En el Codespace todo arranca solo (API :8000, web :5173, logs en `/tmp/atencion/`).
+Para reiniciar ambos servidores: `bash .devcontainer/start.sh`.
+
 ```bash
 docker compose up -d db                       # Postgres 16 local (crea también atencion_test)
 
