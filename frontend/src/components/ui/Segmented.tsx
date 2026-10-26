@@ -1,5 +1,6 @@
 import clsx from "clsx";
 
+/** Filtros en píldora: la opción activa va en negro, como en el resto de la consola. */
 export function Segmented<T extends string>({
   options,
   value,
@@ -15,7 +16,7 @@ export function Segmented<T extends string>({
     <div
       role="tablist"
       aria-label={label}
-      className="flex gap-0.5 overflow-x-auto rounded-xl bg-surface-3 p-1 [scrollbar-width:none]"
+      className="flex gap-1 overflow-x-auto rounded-full bg-surface p-1 shadow-xs ring-1 ring-line [scrollbar-width:none]"
     >
       {options.map((option) => {
         const active = option.value === value;
@@ -27,18 +28,18 @@ export function Segmented<T extends string>({
             aria-selected={active}
             onClick={() => onChange(option.value)}
             className={clsx(
-              "flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1 text-[13px] font-medium transition",
+              "flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-[13px] font-medium transition",
               active
-                ? "bg-surface text-ink shadow-card ring-1 ring-black/5"
-                : "text-ink-3 hover:text-ink",
+                ? "bg-ink text-white shadow-card"
+                : "text-ink-3 hover:bg-surface-3 hover:text-ink",
             )}
           >
             {option.label}
             {option.count !== undefined && option.count > 0 && (
               <span
                 className={clsx(
-                  "min-w-4 rounded-full px-1 text-center text-[10px] leading-4 font-semibold tabular-nums",
-                  active ? "bg-ink text-white" : "bg-line-strong text-ink-2",
+                  "min-w-5 rounded-full px-1.5 text-center text-[11px] leading-5 font-semibold tabular-nums",
+                  active ? "bg-white text-ink" : "bg-surface-3 text-ink-2",
                 )}
               >
                 {option.count}

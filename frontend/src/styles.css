@@ -1,24 +1,26 @@
 @import "tailwindcss";
 
 /*
- * Tema claro: fondo blanco, texto negro y acentos neutros. Los colores de estado (urgente, en
+ * Tema claro en blanco y negro: lienzo gris muy claro, tarjetas blancas muy redondeadas con
+ * sombras suaves, menú lateral negro y botones en píldora. Los colores de estado (urgente, en
  * cola, en espera…) son los únicos con color, para que destaquen.
+ * Pensado para tabletas: objetivos táctiles de 44 px o más y campos a 16 px (sin zoom en iOS).
  */
 @theme {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 
-  --color-canvas: #ffffff;
+  --color-canvas: #f1f1f3;
   --color-surface: #ffffff;
-  --color-surface-2: #fafafa;
-  --color-surface-3: #f4f4f5;
+  --color-surface-2: #f8f8f9;
+  --color-surface-3: #efeff1;
   --color-line: #ebebee;
   --color-line-strong: #d8d8de;
-  --color-ink: #09090b;
+  --color-ink: #0b0b0d;
   --color-ink-2: #3f3f46;
   --color-ink-3: #71717a;
-  --color-brand: #09090b;
+  --color-brand: #0b0b0d;
   --color-brand-ink: #ffffff;
-  --color-brand-soft: #f4f4f5;
+  --color-brand-soft: #efeff1;
   --color-ok: #15803d;
   --color-ok-soft: #f0fdf4;
   --color-warn: #b45309;
@@ -30,10 +32,10 @@
   --color-ai: #6d28d9;
   --color-ai-soft: #f5f3ff;
 
-  --radius-card: 0.875rem;
-  --shadow-xs: 0 1px 2px rgb(9 9 11 / 0.05);
-  --shadow-card: 0 1px 3px rgb(9 9 11 / 0.06), 0 1px 2px rgb(9 9 11 / 0.04);
-  --shadow-pop: 0 20px 40px -12px rgb(9 9 11 / 0.25), 0 0 0 1px rgb(9 9 11 / 0.05);
+  --radius-card: 1.5rem;
+  --shadow-xs: 0 1px 2px rgb(11 11 13 / 0.05);
+  --shadow-card: 0 1px 2px rgb(11 11 13 / 0.04), 0 8px 24px -12px rgb(11 11 13 / 0.08);
+  --shadow-pop: 0 24px 48px -16px rgb(11 11 13 / 0.3), 0 0 0 1px rgb(11 11 13 / 0.04);
 }
 
 :root {
@@ -43,6 +45,16 @@
 body {
   @apply bg-canvas text-ink font-sans antialiased;
   font-feature-settings: "cv11", "ss01";
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* En pantallas táctiles, sin retardo de doble toque. */
+button,
+a,
+select,
+input,
+textarea {
+  touch-action: manipulation;
 }
 
 h1,

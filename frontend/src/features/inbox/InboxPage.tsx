@@ -29,15 +29,15 @@ export function InboxPage() {
     me.data?.role !== "agent" && health.data && health.data.environment !== "production";
 
   return (
-    <div className="grid h-full min-h-0 grid-cols-[minmax(0,1fr)] lg:grid-cols-[23rem_minmax(0,1fr)] xl:grid-cols-[23rem_minmax(0,1fr)_21rem]">
+    <div className="grid h-full min-h-0 grid-cols-[minmax(0,1fr)] gap-3 p-2 md:p-0 lg:grid-cols-[22rem_minmax(0,1fr)] xl:grid-cols-[23rem_minmax(0,1fr)_22rem]">
       <div
         className={clsx(
-          "flex min-h-0 flex-col border-line bg-surface lg:border-r",
+          "flex min-h-0 flex-col overflow-hidden rounded-3xl bg-surface shadow-card",
           selectedId !== null && "hidden lg:flex",
         )}
       >
-        <div className="flex items-center justify-between px-4 pt-5 pb-4">
-          <h1 className="text-xl font-semibold">Conversaciones</h1>
+        <div className="flex items-center justify-between px-5 pt-6 pb-4">
+          <h1 className="text-2xl font-bold">Conversaciones</h1>
           {canSimulate && (
             <Button size="sm" variant="secondary" onClick={() => setSimulator(true)}>
               <FlaskConical className="size-3.5" aria-hidden /> Simular
@@ -53,11 +53,16 @@ export function InboxPage() {
         </div>
       </div>
 
-      <div className={clsx("min-h-0", selectedId === null && "hidden lg:block")}>
+      <div
+        className={clsx(
+          "min-h-0 overflow-hidden rounded-3xl bg-surface shadow-card",
+          selectedId === null && "hidden lg:block",
+        )}
+      >
         {selectedId === null && (
-          <div className="flex h-full flex-col items-center justify-center gap-3 bg-surface-2 text-sm text-ink-3">
-            <div className="flex size-12 items-center justify-center rounded-2xl bg-surface shadow-card ring-1 ring-black/5">
-              <MessagesSquare className="size-5 text-ink-2" aria-hidden />
+          <div className="flex h-full flex-col items-center justify-center gap-4 text-sm text-ink-3">
+            <div className="flex size-16 items-center justify-center rounded-full bg-ink text-white shadow-pop">
+              <MessagesSquare className="size-6" aria-hidden />
             </div>
             Seleccione una conversación
           </div>
@@ -81,18 +86,18 @@ export function InboxPage() {
         <>
           {showInspector && (
             <div
-              className="fixed inset-0 z-30 bg-zinc-950/20 xl:hidden"
+              className="fixed inset-0 z-30 bg-zinc-950/30 backdrop-blur-[2px] xl:hidden"
               onClick={() => setShowInspector(false)}
               aria-hidden
             />
           )}
           <div
             className={clsx(
-              "min-h-0 border-l border-line bg-surface",
+              "min-h-0 overflow-hidden rounded-3xl bg-surface",
               showInspector
-                ? "fixed inset-y-0 right-0 z-40 w-[min(21rem,92vw)] shadow-pop"
+                ? "fixed inset-y-2 right-2 z-40 w-[min(24rem,92vw)] shadow-pop"
                 : "hidden",
-              "xl:static xl:z-auto xl:block xl:w-auto xl:shadow-none",
+              "xl:static xl:z-auto xl:block xl:w-auto xl:shadow-card",
             )}
           >
             <Inspector

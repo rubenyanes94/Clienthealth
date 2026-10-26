@@ -17,7 +17,7 @@ export function Filters({ period }: { period: ReturnType<typeof usePeriod> }) {
       </label>
       <select
         id="area-filter"
-        className="h-9 w-48 rounded-lg bg-surface px-3 text-sm shadow-xs ring-1 ring-line-strong outline-none ring-inset focus:ring-2 focus:ring-ink"
+        className="h-11 w-52 rounded-full bg-surface px-4 text-sm shadow-xs ring-1 ring-line outline-none ring-inset focus:ring-2 focus:ring-ink"
         value={period.areaId ?? ""}
         onChange={(e) => period.setArea(e.target.value ? Number(e.target.value) : null)}
       >

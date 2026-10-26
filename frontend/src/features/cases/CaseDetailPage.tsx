@@ -54,21 +54,21 @@ export function CaseDetailPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-8">
+      <div className="mx-auto max-w-5xl px-3 py-3 sm:px-4 md:py-0">
         <Link
           to="/casos"
-          className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-ink-3 transition hover:text-ink"
+          className="mb-4 inline-flex h-11 items-center gap-2 rounded-full bg-surface px-5 text-sm font-medium text-ink-2 shadow-card transition hover:text-ink"
         >
           <ArrowLeft className="size-4" aria-hidden /> Casos
         </Link>
         {conversation.error && <p className="text-sm text-danger">{conversation.error.message}</p>}
         {c && (
           <>
-            <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <Avatar name={c.contact.name} urgent={c.is_urgent} />
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-surface p-6 shadow-card sm:p-8">
+              <div className="flex items-center gap-5">
+                <Avatar name={c.contact.name} size="lg" urgent={c.is_urgent} />
                 <div>
-                  <h1 className="text-2xl font-semibold">{contactName(c)}</h1>
+                  <h1 className="text-3xl font-bold">{contactName(c)}</h1>
                   <p className="text-sm text-ink-3">
                     Caso #{c.id} · {displayPhone(c.contact.wa_id)}
                   </p>
@@ -82,14 +82,14 @@ export function CaseDetailPage() {
                 ))}
                 <Link
                   to={`/conversaciones/${c.id}`}
-                  className="ml-1 inline-flex h-8 items-center gap-1.5 rounded-lg bg-ink px-3 text-[13px] font-medium text-white shadow-xs transition hover:bg-zinc-800"
+                  className="ml-1 inline-flex h-11 items-center gap-2 rounded-full bg-ink px-5 text-sm font-medium text-white shadow-card transition hover:bg-zinc-800"
                 >
                   <MessagesSquare className="size-4" aria-hidden /> Ver chat
                 </Link>
               </div>
             </div>
 
-            <dl className="mb-10 grid grid-cols-2 overflow-hidden rounded-2xl bg-surface shadow-card ring-1 ring-line sm:grid-cols-4">
+            <dl className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
                 ["Área", c.area?.name ?? "—"],
                 ["Agente", c.assigned_agent?.name ?? "—"],
@@ -100,40 +100,40 @@ export function CaseDetailPage() {
                 ["Mensajes", String(c.messages.filter((m) => !m.is_internal_note).length)],
                 ["Notas internas", String(c.messages.filter((m) => m.is_internal_note).length)],
               ].map(([label, value]) => (
-                <div key={label} className="border-line px-5 py-4 [&:nth-child(-n+4)]:border-b">
-                  <dt className="text-[11px] font-semibold tracking-wider text-ink-3 uppercase">
-                    {label}
-                  </dt>
-                  <dd className="mt-1 text-sm font-medium">{value}</dd>
+                <div key={label} className="rounded-3xl bg-surface px-5 py-4 shadow-card">
+                  <dt className="text-xs text-ink-3">{label}</dt>
+                  <dd className="mt-1.5 text-[15px] font-semibold">{value}</dd>
                 </div>
               ))}
             </dl>
 
-            <h2 className="mb-4 text-base font-semibold">Registro de eventos</h2>
-            <ol className="relative ml-2 border-l border-line">
-              {c.events.map((e) => {
-                const detail = detailOf(e);
-                return (
-                  <li key={e.id} className="mb-5 ml-6">
-                    <span
-                      className={clsx(
-                        "absolute -left-[5px] mt-1.5 size-2.5 rounded-full ring-4 ring-white",
-                        DOT[e.type] ?? "bg-ink",
-                      )}
-                      aria-hidden
-                    />
-                    <div className="text-sm font-medium">
-                      {EVENT_LABEL[e.type]}
-                      {detail && <span className="font-normal text-ink-3"> · {detail}</span>}
-                    </div>
-                    <div className="text-xs text-ink-3">
-                      {formatDateTime(e.created_at)}
-                      {e.agent && ` · ${e.agent.name}`}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
+            <section className="rounded-3xl bg-surface p-6 shadow-card sm:p-8">
+              <h2 className="mb-5 text-lg font-semibold">Registro de eventos</h2>
+              <ol className="relative ml-2 border-l border-line">
+                {c.events.map((e) => {
+                  const detail = detailOf(e);
+                  return (
+                    <li key={e.id} className="mb-5 ml-6">
+                      <span
+                        className={clsx(
+                          "absolute -left-[5px] mt-1.5 size-2.5 rounded-full ring-4 ring-white",
+                          DOT[e.type] ?? "bg-ink",
+                        )}
+                        aria-hidden
+                      />
+                      <div className="text-sm font-medium">
+                        {EVENT_LABEL[e.type]}
+                        {detail && <span className="font-normal text-ink-3"> · {detail}</span>}
+                      </div>
+                      <div className="text-xs text-ink-3">
+                        {formatDateTime(e.created_at)}
+                        {e.agent && ` · ${e.agent.name}`}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            </section>
           </>
         )}
       </div>

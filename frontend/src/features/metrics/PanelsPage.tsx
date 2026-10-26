@@ -1,6 +1,7 @@
 import { Lock } from "lucide-react";
 import type { ReactNode } from "react";
 import { useLiveMetrics, useMe, useMetrics } from "@/api/hooks";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { formatElapsed } from "@/lib/format";
 import { useNow } from "@/lib/useNow";
 import { CsatLine, HourBars, ReasonBars } from "./charts";
@@ -15,8 +16,8 @@ export function SupervisorOnly({ children }: { children: ReactNode }) {
   if (me.data?.role === "agent") {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-        <div className="flex size-12 items-center justify-center rounded-2xl bg-surface-3">
-          <Lock className="size-5 text-ink-2" aria-hidden />
+        <div className="flex size-14 items-center justify-center rounded-full bg-ink text-white">
+          <Lock className="size-5" aria-hidden />
         </div>
         <p className="text-sm text-ink-3">Los indicadores están disponibles para supervisores.</p>
       </div>
@@ -41,16 +42,18 @@ function LiveStrip() {
     ["Agentes conectados", String(live.data.agents_online)],
   ];
   return (
-    <div className="mb-6 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-2xl bg-ink px-5 py-3 text-white">
-      <span className="flex items-center gap-2 text-xs font-semibold tracking-wider uppercase">
+    <div className="mb-4 rounded-3xl bg-ink p-6 text-white shadow-pop">
+      <div className="mb-4 flex items-center gap-2 text-sm font-semibold">
         <span className="size-2 animate-pulse rounded-full bg-green-400" aria-hidden /> Ahora
-      </span>
-      {items.map(([label, value]) => (
-        <span key={label} className="text-sm">
-          <span className="text-white/60">{label} </span>
-          <span className="font-semibold tabular-nums">{value}</span>
-        </span>
-      ))}
+      </div>
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {items.map(([label, value]) => (
+          <div key={label} className="rounded-2xl bg-white/10 px-4 py-3">
+            <dt className="text-xs text-white/60">{label}</dt>
+            <dd className="mt-1 text-2xl font-bold tabular-nums">{value}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }
@@ -63,16 +66,13 @@ export function PanelsPage() {
   return (
     <SupervisorOnly>
       <div className="h-full overflow-y-auto">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-8">
-          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-semibold">Paneles</h1>
-              <p className="mt-1 text-sm text-ink-3">
-                Tiempos en minutos hábiles. Definiciones en el diccionario de indicadores.
-              </p>
-            </div>
+        <div className="mx-auto max-w-7xl px-3 py-3 sm:px-4 md:py-0">
+          <PageHeader
+            title="Paneles"
+            subtitle="Tiempos en minutos hábiles. Definiciones en el diccionario de indicadores."
+          >
             <Filters period={period} />
-          </div>
+          </PageHeader>
 
           <LiveStrip />
 
@@ -80,7 +80,7 @@ export function PanelsPage() {
             <p className="mb-4 text-sm text-danger">{m.overview.error.message}</p>
           )}
 
-          <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
             <StatTile
               label="1ª respuesta"
               value={minutes(o?.first_response.median)}
@@ -128,7 +128,7 @@ export function PanelsPage() {
             />
           </div>
 
-          <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
             <StatTile label="Conversaciones" value={o ? String(o.conversations) : "—"} />
             <StatTile label="Casos atendidos" value={o ? String(o.episodes) : "—"} />
             <StatTile label="Urgencias" value={o ? String(o.urgent) : "—"} />
@@ -139,7 +139,7 @@ export function PanelsPage() {
             />
           </div>
 
-          <div className="mb-6 grid gap-6 lg:grid-cols-2">
+          <div className="mb-4 grid gap-4 lg:grid-cols-2">
             <Card title="Mensajes entrantes por hora" subtitle="Hora de Caracas">
               <HourBars rows={m.byHour.data ?? []} />
             </Card>
@@ -148,7 +148,7 @@ export function PanelsPage() {
             </Card>
           </div>
 
-          <div className="mb-6 grid gap-6 lg:grid-cols-[1fr_2fr]">
+          <div className="mb-4 grid gap-4 lg:grid-cols-[1fr_2fr]">
             <Card title="Motivos de contacto" subtitle="Casos cerrados en el período">
               <ReasonBars rows={m.reasons.data ?? []} />
             </Card>
@@ -157,7 +157,7 @@ export function PanelsPage() {
             </Card>
           </div>
 
-          <Card title="Por agente">
+          <Card title="Por agente" className="mb-3">
             <AgentTable rows={m.byAgent.data ?? []} />
           </Card>
         </div>

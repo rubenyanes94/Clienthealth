@@ -17,7 +17,7 @@ export function Pill({ tone = "neutral", children }: { tone?: Tone; children: Re
   return (
     <span
       className={clsx(
-        "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap ring-1 ring-inset",
+        "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs leading-none font-medium whitespace-nowrap ring-1 ring-inset",
         TONES[tone],
       )}
     >

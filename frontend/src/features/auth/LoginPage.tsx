@@ -22,14 +22,25 @@ export function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-surface-2 px-4">
-      <form onSubmit={submit} className="w-full max-w-sm rounded-2xl bg-surface p-8 shadow-pop">
+    <main className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-canvas px-4">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-40 -right-40 size-[32rem] rounded-full bg-[radial-gradient(circle_at_30%_30%,#ffffff,#d4d4d8_45%,#71717a_75%,#18181b)] opacity-20"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-32 -left-24 size-80 rounded-full border-[28px] border-surface-3"
+      />
+      <form
+        onSubmit={submit}
+        className="relative w-full max-w-md rounded-[2rem] bg-surface p-8 shadow-pop sm:p-10"
+      >
         <div className="mb-8">
-          <div className="mb-5 flex size-11 items-center justify-center rounded-xl bg-ink text-white shadow-card">
-            <HeartPulse className="size-5" aria-hidden />
+          <div className="mb-6 flex size-14 items-center justify-center rounded-full bg-ink text-white shadow-card">
+            <HeartPulse className="size-6" aria-hidden />
           </div>
-          <h1 className="text-xl font-semibold">Atención al Paciente</h1>
-          <p className="mt-1 text-sm text-ink-3">
+          <h1 className="text-3xl font-bold">Atención al Paciente</h1>
+          <p className="mt-1.5 text-sm text-ink-3">
             Centro Médico San Bernardino · Ingrese con su cuenta
           </p>
         </div>
@@ -59,11 +70,17 @@ export function LoginPage() {
           className={`mb-4 ${fieldClass}`}
         />
         {login.error && (
-          <p role="alert" className="mb-4 rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">
+          <p role="alert" className="mb-4 rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger">
             {login.error.message}
           </p>
         )}
-        <Button type="submit" variant="primary" className="mt-2 w-full" disabled={login.isPending}>
+        <Button
+          type="submit"
+          variant="primary"
+          size="lg"
+          className="mt-2 w-full"
+          disabled={login.isPending}
+        >
           {login.isPending ? "Entrando…" : "Entrar"}
         </Button>
       </form>

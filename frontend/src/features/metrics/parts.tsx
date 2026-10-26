@@ -16,13 +16,13 @@ export function Card({
 }) {
   return (
     <section
-      className={clsx("rounded-2xl bg-surface p-5 shadow-card ring-1 ring-line", className)}
+      className={clsx("rounded-3xl bg-surface p-6 shadow-card", className)}
       aria-label={title}
     >
-      <div className="mb-4 flex items-start justify-between gap-3">
+      <div className="mb-5 flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold">{title}</h2>
-          {subtitle && <p className="mt-0.5 text-xs text-ink-3">{subtitle}</p>}
+          <h2 className="text-base font-semibold">{title}</h2>
+          {subtitle && <p className="mt-0.5 text-sm text-ink-3">{subtitle}</p>}
         </div>
         {action}
       </div>
@@ -43,19 +43,19 @@ export function StatTile({
   hint?: string;
 }) {
   return (
-    <div className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-line" title={hint}>
-      <div className="text-[11px] font-semibold tracking-wider text-ink-3 uppercase">{label}</div>
-      <div className="mt-2 text-[26px] leading-none font-semibold tracking-tight tabular-nums">
+    <div className="rounded-3xl bg-surface p-5 shadow-card" title={hint}>
+      <div className="text-[13px] font-medium text-ink-3">{label}</div>
+      <div className="mt-3 text-4xl leading-none font-bold tracking-tight tabular-nums">
         {value}
       </div>
-      {detail && <div className="mt-2 text-xs text-ink-3">{detail}</div>}
+      {detail && <div className="mt-3 text-xs text-ink-3">{detail}</div>}
     </div>
   );
 }
 
 export function ChartTooltip({ title, rows }: { title: string; rows: [string, string][] }) {
   return (
-    <div className="rounded-xl bg-surface px-3 py-2 text-xs shadow-pop">
+    <div className="rounded-2xl bg-surface px-4 py-3 text-xs shadow-pop">
       <div className="mb-1 font-semibold text-ink">{title}</div>
       {rows.map(([label, value]) => (
         <div key={label} className="flex justify-between gap-4 text-ink-2">

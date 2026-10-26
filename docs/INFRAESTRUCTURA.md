@@ -226,7 +226,9 @@ transacción. Sin evento, la acción no cuenta en los indicadores.
 
 - **Vite + React + TypeScript** (modo estricto).
 - **Tailwind CSS v4** con `@tailwindcss/vite`. Los tokens de diseño se definen en `@theme` dentro de
-  `src/styles.css`, con soporte de modo oscuro.
+  `src/styles.css`, con soporte de modo oscuro. Estilo en blanco y negro pensado para tabletas
+  (cada área usa una): menú lateral negro, tarjetas blancas muy redondeadas sobre lienzo gris,
+  botones en píldora de 44 px o más y campos a 16 px.
 - **React Router** para la navegación: `/conversaciones`, `/conversaciones/:id`, `/casos`,
   `/casos/:id`, `/paneles`, `/informes`, `/contactos`, `/login`.
 - **TanStack Query** para el estado del servidor (caché, polling, invalidaciones).
