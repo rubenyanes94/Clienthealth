@@ -51,17 +51,18 @@ export function SimulatorDialog({ open, onClose }: { open: boolean; onClose: () 
           <textarea
             id="sim-text"
             rows={3}
-            className={`${fieldClass} h-auto py-2`}
+            className={`${fieldClass} h-auto py-3`}
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
         </div>
       </div>
-      <div className="mt-5 flex justify-end gap-2">
-        <Button variant="ghost" onClick={onClose}>
+      <div className="mt-7 grid grid-cols-2 gap-2.5">
+        <Button size="lg" onClick={onClose}>
           Cerrar
         </Button>
         <Button
+          size="lg"
           variant="primary"
           disabled={!text.trim() || simulate.isPending}
           onClick={() =>

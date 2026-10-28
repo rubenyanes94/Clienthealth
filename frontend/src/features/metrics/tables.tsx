@@ -5,15 +5,15 @@ import { Empty } from "./parts";
 type AreaRow = components["schemas"]["AreaRow"];
 type AgentRow = components["schemas"]["AgentRow"];
 
-const th = "px-4 py-2.5 text-right font-semibold first:text-left";
-const td = "px-4 py-3 text-right tabular-nums first:text-left";
+const th = "px-6 py-3 text-right font-medium first:text-left";
+const td = "px-6 py-3.5 text-right tabular-nums first:text-left";
 
 export function AreaTable({ rows }: { rows: AreaRow[] }) {
   if (rows.length === 0) return <Empty />;
   return (
-    <div className="-mx-5 overflow-x-auto">
-      <table className="w-full min-w-[40rem] text-[13px]">
-        <thead className="text-[11px] tracking-wider text-ink-3 uppercase">
+    <div className="-mx-6 overflow-x-auto">
+      <table className="w-full min-w-[40rem] text-sm">
+        <thead className="text-xs text-ink-3">
           <tr className="border-b border-line">
             <th className={th}>Área</th>
             <th className={th}>Casos</th>
@@ -47,9 +47,9 @@ export function AreaTable({ rows }: { rows: AreaRow[] }) {
 export function AgentTable({ rows }: { rows: AgentRow[] }) {
   if (rows.length === 0) return <Empty />;
   return (
-    <div className="-mx-5 overflow-x-auto">
-      <table className="w-full min-w-[40rem] text-[13px]">
-        <thead className="text-[11px] tracking-wider text-ink-3 uppercase">
+    <div className="-mx-6 overflow-x-auto">
+      <table className="w-full min-w-[40rem] text-sm">
+        <thead className="text-xs text-ink-3">
           <tr className="border-b border-line">
             <th className={th}>Agente</th>
             <th className={th}>Aceptados</th>

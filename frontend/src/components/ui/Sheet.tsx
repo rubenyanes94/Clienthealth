@@ -28,20 +28,20 @@ export function Sheet({
       ref={ref}
       onClose={onClose}
       aria-label={title}
-      className="m-auto w-[min(30rem,calc(100vw-2rem))] rounded-2xl bg-surface p-0 text-ink shadow-pop backdrop:bg-zinc-950/30 backdrop:backdrop-blur-[2px]"
+      className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-3xl bg-surface p-0 text-ink shadow-pop backdrop:bg-zinc-950/40 backdrop:backdrop-blur-[3px]"
     >
       {open && (
-        <div className="p-6">
-          <div className="mb-5 flex items-start justify-between gap-4">
+        <div className="p-7">
+          <div className="mb-6 flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-base font-semibold">{title}</h2>
+              <h2 className="text-lg font-semibold">{title}</h2>
               {description && <p className="mt-1 text-sm text-ink-3">{description}</p>}
             </div>
             <button
               type="button"
               onClick={onClose}
               aria-label="Cerrar"
-              className="-m-1 rounded-lg p-1 text-ink-3 transition hover:bg-surface-3 hover:text-ink"
+              className="-m-1 flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-3 text-ink-2 transition hover:bg-line-strong hover:text-ink"
             >
               <X className="size-4" />
             </button>
@@ -54,4 +54,4 @@ export function Sheet({
 }
 
 export const fieldClass =
-  "h-10 w-full rounded-lg bg-surface px-3 text-sm ring-1 ring-inset ring-line-strong shadow-xs outline-none transition placeholder:text-ink-3 focus:ring-2 focus:ring-ink";
+  "h-12 w-full rounded-2xl bg-surface-2 px-4 text-base ring-1 ring-inset ring-line-strong outline-none transition placeholder:text-ink-3 focus:bg-surface focus:ring-2 focus:ring-ink";

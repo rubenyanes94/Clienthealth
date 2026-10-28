@@ -1,6 +1,7 @@
 import { Download } from "lucide-react";
 import { useMetrics } from "@/api/hooks";
 import { Button } from "@/components/ui/Button";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { download, toCsv } from "./csv";
 import { Filters } from "./Filters";
 import { minutes, percent } from "./format";
@@ -25,18 +26,15 @@ export function ReportsPage() {
   return (
     <SupervisorOnly>
       <div className="h-full overflow-y-auto">
-        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
-          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-semibold">Informes</h1>
-              <p className="mt-1 text-sm text-ink-3">
-                Tablas detalladas del período, descargables en CSV (se abren en Excel).
-              </p>
-            </div>
+        <div className="mx-auto max-w-6xl px-3 py-3 sm:px-4 md:py-0">
+          <PageHeader
+            title="Informes"
+            subtitle="Tablas detalladas del período, descargables en CSV (se abren en Excel)."
+          >
             <Filters period={period} />
-          </div>
+          </PageHeader>
 
-          <div className="space-y-6">
+          <div className="space-y-4 pb-3">
             <Card
               title="Por área"
               action={exportButton(
@@ -109,7 +107,7 @@ export function ReportsPage() {
               <AgentTable rows={m.byAgent.data ?? []} />
             </Card>
 
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-4 lg:grid-cols-2">
               <Card
                 title="Por hora"
                 subtitle="Hora de Caracas"
@@ -137,15 +135,15 @@ export function ReportsPage() {
                   !m.byHour.data,
                 )}
               >
-                <div className="-mx-5 max-h-96 overflow-y-auto">
-                  <table className="w-full text-[13px]">
-                    <thead className="sticky top-0 bg-surface text-[11px] tracking-wider text-ink-3 uppercase">
+                <div className="-mx-6 max-h-96 overflow-y-auto">
+                  <table className="w-full text-sm">
+                    <thead className="sticky top-0 bg-surface text-xs text-ink-3">
                       <tr className="border-b border-line">
-                        <th className="px-5 py-2 text-left font-semibold">Hora</th>
-                        <th className="px-5 py-2 text-right font-semibold">Mensajes</th>
-                        <th className="px-5 py-2 text-right font-semibold">Casos</th>
-                        <th className="px-5 py-2 text-right font-semibold">1ª resp.</th>
-                        <th className="px-5 py-2 text-right font-semibold">SLA</th>
+                        <th className="px-6 py-2.5 text-left font-medium">Hora</th>
+                        <th className="px-6 py-2.5 text-right font-medium">Mensajes</th>
+                        <th className="px-6 py-2.5 text-right font-medium">Casos</th>
+                        <th className="px-6 py-2.5 text-right font-medium">1ª resp.</th>
+                        <th className="px-6 py-2.5 text-right font-medium">SLA</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-line tabular-nums">
@@ -153,13 +151,13 @@ export function ReportsPage() {
                         ?.filter((h) => h.inbound_messages || h.episodes)
                         .map((h) => (
                           <tr key={h.hour}>
-                            <td className="px-5 py-2">{h.hour}:00</td>
-                            <td className="px-5 py-2 text-right">{h.inbound_messages}</td>
-                            <td className="px-5 py-2 text-right">{h.episodes}</td>
-                            <td className="px-5 py-2 text-right">
+                            <td className="px-6 py-2.5">{h.hour}:00</td>
+                            <td className="px-6 py-2.5 text-right">{h.inbound_messages}</td>
+                            <td className="px-6 py-2.5 text-right">{h.episodes}</td>
+                            <td className="px-6 py-2.5 text-right">
                               {minutes(h.first_response_median)}
                             </td>
-                            <td className="px-5 py-2 text-right">{percent(h.sla.value)}</td>
+                            <td className="px-6 py-2.5 text-right">{percent(h.sla.value)}</td>
                           </tr>
                         ))}
                     </tbody>
@@ -184,9 +182,9 @@ export function ReportsPage() {
                 )}
               >
                 {m.reasons.data?.length ? (
-                  <ul className="-mx-5 divide-y divide-line text-[13px]">
+                  <ul className="-mx-6 divide-y divide-line text-sm">
                     {m.reasons.data.map((x) => (
-                      <li key={x.reason_id ?? "none"} className="flex justify-between px-5 py-2">
+                      <li key={x.reason_id ?? "none"} className="flex justify-between px-6 py-2.5">
                         <span>{x.name}</span>
                         <span className="tabular-nums">
                           {x.count} <span className="text-ink-3">· {percent(x.share)}</span>

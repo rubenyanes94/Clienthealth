@@ -49,11 +49,12 @@ export function TransferDialog({
           </option>
         ))}
       </select>
-      <div className="mt-6 flex justify-end gap-2">
-        <Button variant="ghost" onClick={onClose}>
+      <div className="mt-7 grid grid-cols-2 gap-2.5">
+        <Button size="lg" onClick={onClose}>
           Cancelar
         </Button>
         <Button
+          size="lg"
           variant="primary"
           disabled={!areaId || transfer.isPending}
           onClick={() =>
@@ -135,11 +136,11 @@ export function CloseDialog({
       </select>
 
       <label
-        className={`mt-5 flex items-start gap-3 rounded-xl p-3 ring-1 ring-inset ring-line ${skip ? "opacity-60" : "cursor-pointer hover:bg-surface-2"}`}
+        className={`mt-5 flex items-start gap-3 rounded-3xl p-4 ring-1 ring-inset ring-line ${skip ? "opacity-60" : "cursor-pointer hover:bg-surface-2"}`}
       >
         <input
           type="checkbox"
-          className="mt-0.5 size-4 accent-ink"
+          className="mt-0.5 size-5 shrink-0 accent-ink"
           checked={sendSurvey && !skip}
           disabled={Boolean(skip)}
           onChange={(e) => setSendSurvey(e.target.checked)}
@@ -154,11 +155,12 @@ export function CloseDialog({
         </span>
       </label>
 
-      <div className="mt-6 flex justify-end gap-2">
-        <Button variant="ghost" onClick={onClose}>
+      <div className="mt-7 grid grid-cols-2 gap-2.5">
+        <Button size="lg" onClick={onClose}>
           Cancelar
         </Button>
         <Button
+          size="lg"
           variant="primary"
           disabled={!reasonId || close.isPending}
           onClick={() =>

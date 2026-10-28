@@ -39,11 +39,11 @@ export function MessageBubble({ message }: { message: Message }) {
     <div className={clsx("flex", inbound ? "justify-start" : "justify-end")}>
       <div
         className={clsx(
-          "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed sm:max-w-[68%]",
-          inbound && "rounded-bl-md bg-surface-3 text-ink",
-          agentReply && "rounded-br-md bg-ink text-white shadow-card",
-          automated && "rounded-br-md bg-surface text-ink-2 ring-1 ring-line ring-inset",
-          note && "rounded-br-md bg-note-soft text-ink ring-1 ring-yellow-600/20 ring-inset",
+          "max-w-[85%] rounded-3xl px-4 py-3 text-[15px] leading-relaxed sm:max-w-[68%]",
+          inbound && "rounded-bl-lg bg-surface text-ink shadow-card",
+          agentReply && "rounded-br-lg bg-ink text-white shadow-card",
+          automated && "rounded-br-lg bg-surface-3 text-ink-2 ring-1 ring-line ring-inset",
+          note && "rounded-br-lg bg-note-soft text-ink ring-1 ring-yellow-600/20 ring-inset",
         )}
       >
         {author && (

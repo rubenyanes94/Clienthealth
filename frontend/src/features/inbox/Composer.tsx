@@ -50,7 +50,7 @@ export function Composer({
 
   if (!canReply && !canNote) {
     return (
-      <div className="border-t border-line bg-surface-2 px-5 py-4 text-center text-sm text-ink-3">
+      <div className="border-t border-line bg-surface px-5 py-5 text-center text-sm text-ink-3">
         {blockedReason}
       </div>
     );
@@ -58,14 +58,16 @@ export function Composer({
 
   return (
     <div className="border-t border-line bg-surface p-3 sm:px-5 sm:pb-4">
-      <div className="mb-2 flex flex-wrap items-center gap-1 text-xs">
+      <div className="mb-3 flex flex-wrap items-center gap-1.5 text-[13px]">
         <button
           type="button"
           onClick={() => setNote(false)}
           disabled={!canReply}
           className={clsx(
-            "rounded-md px-2.5 py-1 font-medium transition",
-            !isNote ? "bg-ink text-white" : "text-ink-3 hover:text-ink disabled:opacity-40",
+            "h-9 rounded-full px-4 font-medium transition",
+            !isNote
+              ? "bg-ink text-white"
+              : "bg-surface-3 text-ink-3 hover:text-ink disabled:opacity-40",
           )}
         >
           Responder
@@ -75,10 +77,10 @@ export function Composer({
           onClick={() => setNote(true)}
           disabled={!canNote}
           className={clsx(
-            "flex items-center gap-1 rounded-md px-2.5 py-1 font-medium transition",
+            "flex h-9 items-center gap-1.5 rounded-full px-4 font-medium transition",
             isNote
               ? "bg-note-soft text-note ring-1 ring-yellow-600/20"
-              : "text-ink-3 hover:text-ink",
+              : "bg-surface-3 text-ink-3 hover:text-ink",
           )}
         >
           <Lock className="size-3" aria-hidden /> Nota interna
@@ -109,10 +111,10 @@ export function Composer({
       </div>
       <div
         className={clsx(
-          "flex items-end gap-2 rounded-xl p-1.5 ring-1 ring-inset transition focus-within:ring-2",
+          "flex items-end gap-2 rounded-3xl p-2 ring-1 ring-inset transition focus-within:ring-2",
           isNote
             ? "bg-note-soft ring-yellow-600/25 focus-within:ring-note"
-            : "bg-surface ring-line-strong shadow-xs focus-within:ring-ink",
+            : "bg-surface-2 ring-line-strong focus-within:bg-surface focus-within:ring-ink",
         )}
       >
         <label className="sr-only" htmlFor="composer">
@@ -127,21 +129,20 @@ export function Composer({
           placeholder={
             isNote ? "Nota visible solo para el equipo…" : "Escriba su respuesta…  (Ctrl+Enter)"
           }
-          className="max-h-48 min-h-[2.75rem] flex-1 resize-none bg-transparent px-2 py-1.5 text-sm outline-none placeholder:text-ink-3"
+          className="max-h-48 min-h-12 flex-1 resize-none bg-transparent px-3 py-2 text-base outline-none placeholder:text-ink-3"
         />
         <Button
           variant="primary"
-          size="sm"
-          className="size-9 rounded-lg px-0"
+          className="size-12 px-0"
           onClick={submit}
           disabled={!text.trim() || send.isPending}
           aria-label={isNote ? "Guardar nota" : "Enviar"}
         >
-          <ArrowUp className="size-4" aria-hidden />
+          <ArrowUp className="size-5" aria-hidden />
         </Button>
       </div>
       {canReply && !isNote && (
-        <p className="mt-1.5 px-1 text-[11px] text-ink-3">
+        <p className="mt-2 px-2 text-xs text-ink-3">
           Las propuestas del copiloto no se envían solas: revíselas antes de enviar.
         </p>
       )}

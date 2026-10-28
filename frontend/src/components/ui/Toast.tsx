@@ -23,14 +23,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-4 bottom-20 z-50 md:bottom-4 flex flex-col items-center gap-2 sm:inset-x-auto sm:right-4 sm:items-end"
+        className="pointer-events-none fixed inset-x-4 bottom-24 z-50 md:bottom-5 flex flex-col items-center gap-2 sm:inset-x-auto sm:right-4 sm:items-end"
       >
         {toasts.map((toast) => (
           <div
             key={toast.id}
             role="status"
             className={clsx(
-              "pointer-events-auto max-w-sm rounded-xl px-4 py-2.5 text-sm font-medium shadow-pop",
+              "pointer-events-auto max-w-sm rounded-full px-5 py-3 text-sm font-medium shadow-pop",
               toast.tone === "ok" ? "bg-ink text-white" : "bg-danger text-white",
             )}
           >

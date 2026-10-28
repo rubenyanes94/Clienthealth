@@ -37,18 +37,18 @@ export function ChatView({
 
   return (
     <section aria-label="Conversación" className="flex h-full min-h-0 flex-col">
-      <header className="flex items-center gap-3 border-b border-line bg-surface px-3 py-3 sm:px-5">
+      <header className="flex items-center gap-3 border-b border-line bg-surface px-3 py-3.5 sm:px-5">
         <Link
           to={backTo}
-          className="rounded-lg p-1.5 text-ink-2 hover:bg-surface-3 lg:hidden"
+          className="flex size-11 shrink-0 items-center justify-center rounded-full bg-surface-3 text-ink-2 hover:bg-line-strong lg:hidden"
           aria-label="Volver"
         >
           <ArrowLeft className="size-5" />
         </Link>
         <Avatar name={conversation.contact.name} urgent={conversation.is_urgent} />
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-[15px] font-semibold">{contactName(conversation)}</h2>
-          <p className="truncate text-xs text-ink-3">
+          <h2 className="truncate text-base font-semibold">{contactName(conversation)}</h2>
+          <p className="truncate text-sm text-ink-3">
             {displayPhone(conversation.contact.wa_id)}
             {conversation.area && ` · ${conversation.area.name}`}
           </p>
@@ -60,7 +60,6 @@ export function ChatView({
         {canAccept && (
           <Button
             variant="primary"
-            size="sm"
             disabled={simple.isPending}
             onClick={() =>
               simple.mutate("accept", {
@@ -73,17 +72,20 @@ export function ChatView({
           </Button>
         )}
         <Button
-          variant="ghost"
-          size="sm"
+          variant="secondary"
           onClick={onToggleInspector}
           aria-label="Detalle del caso"
           className="xl:hidden"
         >
-          <PanelRight className="size-4" />
+          <PanelRight className="size-4" aria-hidden />
+          <span className="hidden sm:inline">Detalle</span>
         </Button>
       </header>
 
-      <div ref={scroller} className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-3 py-5 sm:px-8">
+      <div
+        ref={scroller}
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-surface-2 px-3 py-5 sm:px-8"
+      >
         {conversation.messages.map((m, i) => {
           const prev = conversation.messages[i - 1];
           const newDay = !prev || dayKey(prev.created_at) !== dayKey(m.created_at);
@@ -91,7 +93,7 @@ export function ChatView({
             <Fragment key={m.id}>
               {newDay && (
                 <div className="flex justify-center py-3">
-                  <span className="rounded-full bg-surface-3 px-2.5 py-0.5 text-[11px] font-medium text-ink-3">
+                  <span className="rounded-full bg-surface px-3 py-1 text-xs font-medium text-ink-3 shadow-xs">
                     {formatDay(m.created_at)}
                   </span>
                 </div>

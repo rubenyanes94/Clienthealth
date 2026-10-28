@@ -14,15 +14,17 @@ export function Avatar({
   urgent = false,
 }: {
   name: string | null | undefined;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
   urgent?: boolean;
 }) {
   return (
     <span
       aria-hidden
       className={clsx(
-        "relative inline-flex shrink-0 items-center justify-center rounded-full bg-surface-3 font-semibold text-ink-2 ring-1 ring-black/5",
-        size === "sm" ? "size-8 text-[11px]" : "size-10 text-[13px]",
+        "relative inline-flex shrink-0 items-center justify-center rounded-full bg-surface-3 font-semibold text-ink-2 ring-2 ring-white",
+        size === "sm" && "size-9 text-xs",
+        size === "md" && "size-11 text-sm",
+        size === "lg" && "size-16 text-lg",
       )}
     >
       {initials(name)}
