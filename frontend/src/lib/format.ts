@@ -49,6 +49,15 @@ export function formatElapsed(fromIso: string, now: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+/** "hace 5 min", "hace 2 h"; pasado un día, la fecha. */
+export function timeAgo(iso: string, now: number): string {
+  const minutes = Math.floor((now - new Date(iso).getTime()) / 60_000);
+  if (minutes < 1) return "ahora";
+  if (minutes < 60) return `hace ${minutes} min`;
+  if (minutes < 24 * 60) return `hace ${Math.floor(minutes / 60)} h`;
+  return formatDateTime(iso);
+}
+
 export function displayPhone(waId: string): string {
   // 58 414 123 4567
   const m = waId.match(/^(58)(\d{3})(\d{3})(\d{4})$/);

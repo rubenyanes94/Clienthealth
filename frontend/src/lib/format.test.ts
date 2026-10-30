@@ -1,4 +1,4 @@
-import { displayPhone, formatElapsed, formatListTime, patientPhone } from "./format";
+import { displayPhone, formatElapsed, formatListTime, patientPhone, timeAgo } from "./format";
 
 describe("format", () => {
   it("formatea teléfonos venezolanos", () => {
@@ -29,5 +29,16 @@ describe("patientPhone", () => {
 
   it("conserva el código de un número extranjero", () => {
     expect(patientPhone("573001234567")).toBe("+573001234567");
+  });
+});
+
+describe("timeAgo", () => {
+  const now = new Date("2026-10-30T15:00:00Z").getTime();
+  it.each([
+    ["2026-10-30T14:59:40Z", "ahora"],
+    ["2026-10-30T14:55:00Z", "hace 5 min"],
+    ["2026-10-30T12:30:00Z", "hace 2 h"],
+  ])("%s", (iso, expected) => {
+    expect(timeAgo(iso, now)).toBe(expected);
   });
 });

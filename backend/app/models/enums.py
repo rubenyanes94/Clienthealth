@@ -96,9 +96,15 @@ class CaseEventType(StrEnum):
     TAKEN = "taken"
     UPDATED = "updated"
     NOTE_ADDED = "note_added"
+    ASSIGNED = "assigned"  # un caso se asigna a una persona (distinto de tomarlo uno mismo)
     TASK_CREATED = "task_created"
     TASK_COMPLETED = "task_completed"
     TASK_CANCELLED = "task_cancelled"
+
+
+class NotificationType(StrEnum):
+    TASK_ASSIGNED = "task_assigned"
+    CASE_ASSIGNED = "case_assigned"
 
 
 class CaseTaskType(StrEnum):

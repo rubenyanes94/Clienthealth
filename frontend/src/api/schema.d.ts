@@ -576,6 +576,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/cases/{case_id}/assign": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Assign */
+    post: operations["assign_api_cases__case_id__assign_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/cases/{case_id}/notes": {
     parameters: {
       query?: never;
@@ -638,6 +655,57 @@ export interface paths {
     put?: never;
     /** Cancel Task */
     post: operations["cancel_task_api_cases__case_id__tasks__task_id__cancel_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/notifications": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** List Notifications */
+    get: operations["list_notifications_api_notifications_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/notifications/read-all": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Read All */
+    post: operations["read_all_api_notifications_read_all_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/notifications/{notification_id}/read": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Read One */
+    post: operations["read_one_api_notifications__notification_id__read_post"];
     delete?: never;
     options?: never;
     head?: never;
@@ -1287,6 +1355,11 @@ export interface components {
       /** Name */
       name: string;
     };
+    /** CaseAssignIn */
+    CaseAssignIn: {
+      /** Agent Id */
+      agent_id: number;
+    };
     /** CaseBrief */
     CaseBrief: {
       /** Id */
@@ -1382,6 +1455,7 @@ export interface components {
       | "taken"
       | "updated"
       | "note_added"
+      | "assigned"
       | "task_created"
       | "task_completed"
       | "task_cancelled";
@@ -2055,6 +2129,43 @@ export interface components {
       subject: string;
       patient: components["schemas"]["PatientRef"];
     };
+    /** NotificationCase */
+    NotificationCase: {
+      /** Id */
+      id: number;
+      /** Subject */
+      subject: string;
+      /** Patient Name */
+      patient_name: string;
+    };
+    /** NotificationList */
+    NotificationList: {
+      /** Unread */
+      unread: number;
+      /** Items */
+      items: components["schemas"]["NotificationOut"][];
+    };
+    /** NotificationOut */
+    NotificationOut: {
+      /** Id */
+      id: number;
+      type: components["schemas"]["NotificationType"];
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Read At */
+      read_at: string | null;
+      actor: components["schemas"]["AgentRef"] | null;
+      case: components["schemas"]["NotificationCase"];
+      task_type: components["schemas"]["CaseTaskType"] | null;
+    };
+    /**
+     * NotificationType
+     * @enum {string}
+     */
+    NotificationType: "task_assigned" | "case_assigned";
     /** NpsSummary */
     NpsSummary: {
       /** Responses */
@@ -3477,6 +3588,41 @@ export interface operations {
       };
     };
   };
+  assign_api_cases__case_id__assign_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        case_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CaseAssignIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CaseDetail"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   add_note_api_cases__case_id__notes_post: {
     parameters: {
       query?: never;
@@ -3599,6 +3745,73 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["CaseTaskOut"];
         };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_notifications_api_notifications_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["NotificationList"];
+        };
+      };
+    };
+  };
+  read_all_api_notifications_read_all_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  read_one_api_notifications__notification_id__read_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        notification_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Validation Error */
       422: {

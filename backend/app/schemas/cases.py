@@ -123,6 +123,10 @@ class CaseTransferIn(BaseModel):
     area_id: int
 
 
+class CaseAssignIn(BaseModel):
+    agent_id: int
+
+
 class CaseNoteIn(BaseModel):
     body: str = Field(min_length=1, max_length=4000)
 

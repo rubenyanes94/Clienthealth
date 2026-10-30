@@ -7,6 +7,7 @@ import {
   Pencil,
   SendHorizontal,
   User,
+  UserPlus,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router";
@@ -14,11 +15,17 @@ import { useCase, useCaseActions, useCatalog, useMe } from "@/api/hooks";
 import type { CaseDetail, CaseEvent, CaseStage, CaseTaskType } from "@/api/types";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
+import { NotificationBell } from "@/features/notifications/NotificationCenter";
 import { Pill } from "@/components/ui/Pill";
 import { Segmented } from "@/components/ui/Segmented";
 import { useToast } from "@/components/ui/Toast";
 import { patientPhone, formatDateTime } from "@/lib/format";
-import { CloseCaseDialog, EditCaseDialog, TransferCaseDialog } from "./CaseDialogs";
+import {
+  AssignCaseDialog,
+  CloseCaseDialog,
+  EditCaseDialog,
+  TransferCaseDialog,
+} from "./CaseDialogs";
 import { StagePath } from "./StagePath";
 import { STAGE_LABEL, stepLabel } from "./stages";
 import { TASK_LABEL } from "./tasks";
@@ -47,6 +54,10 @@ function useEventText() {
         return `Transferido de ${areaName(d.from_area_id)} a ${areaName(d.to_area_id)}`;
       case "taken":
         return "Caso tomado";
+      case "assigned": {
+        const person = catalog.data?.agents.find((a) => a.id === d.assigned_agent_id)?.name;
+        return person ? `Caso asignado a ${person}` : "Caso asignado";
+      }
       case "updated": {
         const fields = (d.fields as string[]).map((f) => FIELD_LABEL[f] ?? f);
         return `Editado: ${fields.join(", ")}`;
@@ -189,18 +200,21 @@ export function CaseDetailPage() {
   const toast = useToast();
   const { take } = useCaseActions(id);
   const [tab, setTab] = useState<Tab>("detalles");
-  const [dialog, setDialog] = useState<"transfer" | "close" | "edit" | null>(null);
+  const [dialog, setDialog] = useState<"transfer" | "close" | "edit" | "assign" | null>(null);
   const c = query.data;
 
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-7xl px-3 py-3 sm:px-4 md:py-0">
-        <Link
-          to="/casos"
-          className="mb-4 inline-flex h-11 items-center gap-2 rounded-full bg-surface px-5 text-sm font-medium text-ink-2 shadow-card transition hover:text-ink"
-        >
-          <ArrowLeft className="size-4" aria-hidden /> Casos
-        </Link>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <Link
+            to="/casos"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-surface px-5 text-sm font-medium text-ink-2 shadow-card transition hover:text-ink"
+          >
+            <ArrowLeft className="size-4" aria-hidden /> Casos
+          </Link>
+          <NotificationBell />
+        </div>
         {query.error && <p className="text-sm text-danger">{query.error.message}</p>}
         {c && (
           <>
@@ -225,6 +239,9 @@ export function CaseDetailPage() {
                         <Hand className="size-4" aria-hidden /> Tomar caso
                       </Button>
                     )}
+                    <Button onClick={() => setDialog("assign")}>
+                      <UserPlus className="size-4" aria-hidden /> Asignar
+                    </Button>
                     {c.stage !== "resolved" && (
                       <Button onClick={() => setDialog("transfer")}>
                         <ArrowRightLeft className="size-4" aria-hidden /> Transferir
@@ -357,6 +374,7 @@ export function CaseDetailPage() {
               open={dialog === "transfer"}
               onClose={() => setDialog(null)}
             />
+            <AssignCaseDialog item={c} open={dialog === "assign"} onClose={() => setDialog(null)} />
             <CloseCaseDialog item={c} open={dialog === "close"} onClose={() => setDialog(null)} />
             <EditCaseDialog item={c} open={dialog === "edit"} onClose={() => setDialog(null)} />
           </>

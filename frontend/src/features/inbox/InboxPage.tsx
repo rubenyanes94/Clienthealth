@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from "react-router";
 import { useConversation, useHealth, useMe } from "@/api/hooks";
 import type { InboxFilter } from "@/api/types";
 import { Button } from "@/components/ui/Button";
+import { NotificationBell } from "@/features/notifications/NotificationCenter";
 import { ChatView } from "./ChatView";
 import { permissionsFor } from "./permissions";
 import { ConversationList } from "./ConversationList";
@@ -38,11 +39,14 @@ export function InboxPage() {
       >
         <div className="flex items-center justify-between px-5 pt-6 pb-4">
           <h1 className="text-2xl font-bold">Conversaciones</h1>
-          {canSimulate && (
-            <Button size="sm" variant="secondary" onClick={() => setSimulator(true)}>
-              <FlaskConical className="size-3.5" aria-hidden /> Simular
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            {canSimulate && (
+              <Button size="sm" variant="secondary" onClick={() => setSimulator(true)}>
+                <FlaskConical className="size-3.5" aria-hidden /> Simular
+              </Button>
+            )}
+          </div>
         </div>
         <div className="min-h-0 flex-1">
           <ConversationList

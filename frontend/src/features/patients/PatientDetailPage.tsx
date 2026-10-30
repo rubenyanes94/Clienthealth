@@ -5,6 +5,7 @@ import { usePatient } from "@/api/hooks";
 import type { PatientEvent } from "@/api/types";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
+import { NotificationBell } from "@/features/notifications/NotificationCenter";
 import { patientPhone, formatDateTime } from "@/lib/format";
 import { NewCaseDialog } from "../cases/NewCaseDialog";
 import { StagePill } from "../cases/StagePill";
@@ -38,12 +39,15 @@ export function PatientDetailPage() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-5xl px-3 py-3 sm:px-4 md:py-0">
-        <Link
-          to="/pacientes"
-          className="mb-4 inline-flex h-11 items-center gap-2 rounded-full bg-surface px-5 text-sm font-medium text-ink-2 shadow-card transition hover:text-ink"
-        >
-          <ArrowLeft className="size-4" aria-hidden /> Pacientes
-        </Link>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <Link
+            to="/pacientes"
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-surface px-5 text-sm font-medium text-ink-2 shadow-card transition hover:text-ink"
+          >
+            <ArrowLeft className="size-4" aria-hidden /> Pacientes
+          </Link>
+          <NotificationBell />
+        </div>
         {patient.error && <p className="text-sm text-danger">{patient.error.message}</p>}
         {p && (
           <>

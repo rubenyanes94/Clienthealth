@@ -19,10 +19,11 @@ from app.models.enums import (
     CaseTaskStatus,
     CaseTaskType,
     EventType,
+    NotificationType,
     PatientEventType,
     Priority,
 )
-from app.services import conversations, events, patients
+from app.services import conversations, events, notifications, patients
 from app.services.conversations import ConflictError, ConversationError, NotFoundError
 
 # Pasos permitidos. Un caso resuelto puede volver a atención si el problema sigue, y uno cerrado
@@ -210,6 +211,30 @@ def take(db: Session, agent: Agent, case_id: int) -> Case:
     return case
 
 
+def assign(db: Session, agent: Agent, case_id: int, assignee_id: int) -> Case:
+    """Pone el caso a cargo de una persona, de cualquier área. Ella recibe una notificación."""
+    case = _lock(db, case_id)
+    if case.stage == CaseStage.CLOSED:
+        raise ConflictError("Reabra el caso para asignarlo")
+    assignee = db.get(Agent, assignee_id)
+    if assignee is None or not assignee.is_active:
+        raise ConversationError("Usuario no válido")
+    if case.assigned_agent_id == assignee.id:
+        return case
+    previous = case.assigned_agent_id
+    case.assigned_agent_id = assignee.id
+    events.record_case(
+        db,
+        case,
+        CaseEventType.ASSIGNED,
+        agent=agent,
+        data={"assigned_agent_id": assignee.id, "from_agent_id": previous},
+    )
+    notifications.notify(db, assignee.id, agent, NotificationType.CASE_ASSIGNED, case)
+    db.commit()
+    return case
+
+
 def add_note(db: Session, agent: Agent, case_id: int, body: str) -> CaseNote:
     case = _lock(db, case_id)
     body = body.strip()
@@ -259,6 +284,7 @@ def create_task(
         agent=agent,
         data={"task_id": task.id, "task_type": type.value, "assigned_agent_id": assignee.id},
     )
+    notifications.notify(db, assignee.id, agent, NotificationType.TASK_ASSIGNED, case, task)
     db.commit()
     return task
 
