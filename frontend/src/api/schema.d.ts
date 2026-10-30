@@ -473,6 +473,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/cases/tasks/mine": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** My Tasks */
+    get: operations["my_tasks_api_cases_tasks_mine_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/cases": {
     parameters: {
       query?: never;
@@ -570,6 +587,57 @@ export interface paths {
     put?: never;
     /** Add Note */
     post: operations["add_note_api_cases__case_id__notes_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/cases/{case_id}/tasks": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Create Task */
+    post: operations["create_task_api_cases__case_id__tasks_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/cases/{case_id}/tasks/{task_id}/complete": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Complete Task */
+    post: operations["complete_task_api_cases__case_id__tasks__task_id__complete_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/cases/{case_id}/tasks/{task_id}/cancel": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Cancel Task */
+    post: operations["cancel_task_api_cases__case_id__tasks__task_id__cancel_post"];
     delete?: never;
     options?: never;
     head?: never;
@@ -954,7 +1022,7 @@ export interface paths {
     };
     /**
      * Catalog
-     * @description Áreas y motivos activos, para transferir y cerrar casos.
+     * @description Áreas, motivos y usuarios activos, para transferir, cerrar y asignar tareas.
      */
     get: operations["catalog_api_catalog_get"];
     put?: never;
@@ -987,6 +1055,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /** AgentDirectoryEntry */
+    AgentDirectoryEntry: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string;
+      /** Area Id */
+      area_id: number | null;
+    };
     /** AgentIn */
     AgentIn: {
       /** Name */
@@ -1254,6 +1331,8 @@ export interface components {
       updated_at: string;
       /** Description */
       description: string;
+      /** Patient Email */
+      patient_email: string;
       created_by: components["schemas"]["AgentRef"] | null;
       contact_reason: components["schemas"]["ReasonRef"] | null;
       /** Resolved At */
@@ -1264,6 +1343,8 @@ export interface components {
       events: components["schemas"]["CaseEventOut"][];
       /** Notes */
       notes: components["schemas"]["CaseNoteOut"][];
+      /** Tasks */
+      tasks: components["schemas"]["CaseTaskOut"][];
       /** Next Stages */
       next_stages: components["schemas"]["CaseStage"][];
       /**
@@ -1294,7 +1375,16 @@ export interface components {
      * CaseEventType
      * @enum {string}
      */
-    CaseEventType: "created" | "stage_changed" | "transferred" | "taken" | "updated" | "note_added";
+    CaseEventType:
+      | "created"
+      | "stage_changed"
+      | "transferred"
+      | "taken"
+      | "updated"
+      | "note_added"
+      | "task_created"
+      | "task_completed"
+      | "task_cancelled";
     /** CaseIn */
     CaseIn: {
       /** Patient Id */
@@ -1445,6 +1535,49 @@ export interface components {
        */
       updated_at: string;
     };
+    /** CaseTaskIn */
+    CaseTaskIn: {
+      type: components["schemas"]["CaseTaskType"];
+      /** Assigned Agent Id */
+      assigned_agent_id: number;
+      /** @default normal */
+      priority: components["schemas"]["Priority"];
+      /**
+       * Notes
+       * @default
+       */
+      notes: string;
+    };
+    /** CaseTaskOut */
+    CaseTaskOut: {
+      /** Id */
+      id: number;
+      type: components["schemas"]["CaseTaskType"];
+      status: components["schemas"]["CaseTaskStatus"];
+      priority: components["schemas"]["Priority"];
+      /** Notes */
+      notes: string;
+      assigned_agent: components["schemas"]["AgentRef"];
+      created_by: components["schemas"]["AgentRef"] | null;
+      finished_by: components["schemas"]["AgentRef"] | null;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Finished At */
+      finished_at: string | null;
+    };
+    /**
+     * CaseTaskStatus
+     * @enum {string}
+     */
+    CaseTaskStatus: "pending" | "done" | "cancelled";
+    /**
+     * CaseTaskType
+     * @enum {string}
+     */
+    CaseTaskType: "call" | "whatsapp" | "email";
     /** CaseTransferIn */
     CaseTransferIn: {
       /** Area Id */
@@ -1500,6 +1633,8 @@ export interface components {
       areas: components["schemas"]["AreaOut"][];
       /** Reasons */
       reasons: components["schemas"]["ReasonOut"][];
+      /** Agents */
+      agents: components["schemas"]["AgentDirectoryEntry"][];
     };
     /** CloseIn */
     CloseIn: {
@@ -1891,6 +2026,35 @@ export interface components {
      * @enum {string}
      */
     MessageStatus: "received" | "sent" | "delivered" | "read" | "failed" | "simulated" | "note";
+    /** MyTask */
+    MyTask: {
+      /** Id */
+      id: number;
+      type: components["schemas"]["CaseTaskType"];
+      status: components["schemas"]["CaseTaskStatus"];
+      priority: components["schemas"]["Priority"];
+      /** Notes */
+      notes: string;
+      assigned_agent: components["schemas"]["AgentRef"];
+      created_by: components["schemas"]["AgentRef"] | null;
+      finished_by: components["schemas"]["AgentRef"] | null;
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Finished At */
+      finished_at: string | null;
+      case: components["schemas"]["MyTaskCase"];
+    };
+    /** MyTaskCase */
+    MyTaskCase: {
+      /** Id */
+      id: number;
+      /** Subject */
+      subject: string;
+      patient: components["schemas"]["PatientRef"];
+    };
     /** NpsSummary */
     NpsSummary: {
       /** Responses */
@@ -3093,6 +3257,26 @@ export interface operations {
       };
     };
   };
+  my_tasks_api_cases_tasks_mine_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MyTask"][];
+        };
+      };
+    };
+  };
   create_api_cases_post: {
     parameters: {
       query?: never;
@@ -3315,6 +3499,105 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["CaseNoteOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  create_task_api_cases__case_id__tasks_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        case_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CaseTaskIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CaseTaskOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  complete_task_api_cases__case_id__tasks__task_id__complete_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        case_id: number;
+        task_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CaseTaskOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  cancel_task_api_cases__case_id__tasks__task_id__cancel_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        case_id: number;
+        task_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CaseTaskOut"];
         };
       };
       /** @description Validation Error */

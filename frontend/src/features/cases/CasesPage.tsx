@@ -12,6 +12,7 @@ import { fieldClass } from "@/components/ui/Sheet";
 import { formatElapsed } from "@/lib/format";
 import { useDebounced } from "@/lib/useDebounced";
 import { useNow } from "@/lib/useNow";
+import { MyTasks } from "./MyTasks";
 import { NewCaseDialog } from "./NewCaseDialog";
 import { RoomBoard } from "./RoomBoard";
 import { StagePill } from "./StagePill";
@@ -79,6 +80,8 @@ export function CasesPage() {
             <Plus className="size-5" aria-hidden /> Nuevo caso
           </Button>
         </PageHeader>
+
+        <MyTasks />
 
         {live.data && (
           <RoomBoard

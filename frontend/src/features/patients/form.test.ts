@@ -23,6 +23,17 @@ describe("validatePatient", () => {
     expect(validatePatient(valid)).toEqual({});
   });
 
+  it.each(["4141234567", "0414-1234567", "+58 414 123 4567", "+57 300 123 4567"])(
+    "acepta el teléfono %s",
+    (phone) => {
+      expect(validatePatient({ ...valid, phone }).phone).toBeUndefined();
+    },
+  );
+
+  it.each(["0414567890", "414123456", "58414123456"])("rechaza el teléfono %s", (phone) => {
+    expect(validatePatient({ ...valid, phone }).phone).toBeDefined();
+  });
+
   it("rechaza correo, cédula y teléfono mal escritos", () => {
     const errors = validatePatient({ ...valid, email: "x@", national_id: "12", phone: "123" });
     expect(Object.keys(errors).sort()).toEqual(["email", "national_id", "phone"]);

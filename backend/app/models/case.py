@@ -6,7 +6,14 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, JSONType, UTCDateTime, utcnow
 from app.models.conversation import Contact, Conversation
-from app.models.enums import CaseEventType, CaseStage, PatientEventType, Priority
+from app.models.enums import (
+    CaseEventType,
+    CaseStage,
+    CaseTaskStatus,
+    CaseTaskType,
+    PatientEventType,
+    Priority,
+)
 from app.models.org import Agent, Area, ContactReason, enum_col
 
 
@@ -92,6 +99,7 @@ class Case(Base):
     conversation: Mapped[Conversation | None] = relationship()
     events: Mapped[list["CaseEvent"]] = relationship(order_by="CaseEvent.id")
     notes: Mapped[list["CaseNote"]] = relationship(order_by="CaseNote.id")
+    tasks: Mapped[list["CaseTask"]] = relationship(order_by="CaseTask.id", back_populates="case")
 
 
 class CaseEvent(Base):
@@ -130,3 +138,38 @@ class CaseNote(Base):
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
     agent: Mapped[Agent | None] = relationship()
+
+
+class CaseTask(Base):
+    """Contacto con el paciente que alguien debe hacer: llamar, escribirle por WhatsApp o un correo.
+
+    Es un recordatorio: marcarla como hecha no envía nada al paciente.
+    """
+
+    __tablename__ = "case_tasks"
+    __table_args__ = (
+        Index("ix_case_tasks_case", "case_id", "id"),
+        Index("ix_case_tasks_assigned_status", "assigned_agent_id", "status"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    case_id: Mapped[int] = mapped_column(ForeignKey("cases.id"))
+    type: Mapped[CaseTaskType] = mapped_column(enum_col(CaseTaskType, "case_task_type"))
+    status: Mapped[CaseTaskStatus] = mapped_column(
+        enum_col(CaseTaskStatus, "case_task_status"), default=CaseTaskStatus.PENDING
+    )
+    priority: Mapped[Priority] = mapped_column(
+        enum_col(Priority, "priority"), default=Priority.NORMAL
+    )
+    notes: Mapped[str] = mapped_column(Text, default="")
+    assigned_agent_id: Mapped[int] = mapped_column(ForeignKey("agents.id"))
+    created_by_agent_id: Mapped[int | None] = mapped_column(ForeignKey("agents.id"))
+    # Quien la completó o la canceló, que puede no ser a quien se le asignó.
+    finished_by_agent_id: Mapped[int | None] = mapped_column(ForeignKey("agents.id"))
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+    finished_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+
+    case: Mapped[Case] = relationship(back_populates="tasks")
+    assigned_agent: Mapped[Agent] = relationship(foreign_keys=[assigned_agent_id])
+    created_by: Mapped[Agent | None] = relationship(foreign_keys=[created_by_agent_id])
+    finished_by: Mapped[Agent | None] = relationship(foreign_keys=[finished_by_agent_id])

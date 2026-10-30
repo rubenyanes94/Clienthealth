@@ -10,7 +10,7 @@ import { Field, invalidFieldClass } from "@/components/ui/Field";
 import { Segmented } from "@/components/ui/Segmented";
 import { fieldClass, Sheet } from "@/components/ui/Sheet";
 import { useToast } from "@/components/ui/Toast";
-import { displayPhone } from "@/lib/format";
+import { patientPhone } from "@/lib/format";
 import { useDebounced } from "@/lib/useDebounced";
 import {
   EMPTY_PATIENT,
@@ -53,7 +53,7 @@ function NewCaseForm({
       ? {
           ...EMPTY_PATIENT,
           ...splitName(conversation.contact.name),
-          phone: conversation.contact.wa_id,
+          phone: patientPhone(conversation.contact.wa_id),
         }
       : EMPTY_PATIENT,
   );
@@ -123,7 +123,7 @@ function NewCaseForm({
                 {patient.first_name} {patient.last_name}
               </div>
               <div className="truncate text-sm text-ink-3">
-                {patient.national_id} · {displayPhone(patient.phone)}
+                {patient.national_id} · {patientPhone(patient.phone)}
               </div>
             </div>
             {!presetPatient && (
@@ -173,7 +173,7 @@ function NewCaseForm({
                         {p.first_name} {p.last_name}
                       </span>
                       <span className="block truncate text-xs text-ink-3">
-                        {p.national_id} · {displayPhone(p.phone)}
+                        {p.national_id} · {patientPhone(p.phone)}
                       </span>
                     </span>
                   </button>

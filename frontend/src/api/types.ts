@@ -31,4 +31,7 @@ export type CaseAgentRow = S["CaseAgentRow"];
 export type AgentIn = S["AgentIn"];
 export type AgentPatch = S["AgentPatch"];
 export type AgentRole = S["AgentRole"];
+export type CaseTask = S["CaseTaskOut"];
+export type CaseTaskType = S["CaseTaskType"];
+export type MyTask = S["MyTask"];
 export type InboxFilter = "open" | "queue" | "mine" | "pending" | "closed" | "bot" | "all";

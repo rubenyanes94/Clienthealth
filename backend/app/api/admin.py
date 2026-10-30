@@ -13,6 +13,7 @@ from app.db.session import get_db
 from app.models import Agent, Area, BusinessHours, ContactReason, FaqEntry, Holiday
 from app.models.enums import AgentRole
 from app.schemas import (
+    ORM,
     AgentIn,
     AgentOut,
     AgentPatch,
@@ -32,21 +33,30 @@ router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(requir
 catalog_router = APIRouter(prefix="/catalog", tags=["catalog"])
 
 
+class AgentDirectoryEntry(ORM):
+    id: int
+    name: str
+    area_id: int | None
+
+
 class Catalog(BaseModel):
     areas: list[AreaOut]
     reasons: list[ReasonOut]
+    agents: list[AgentDirectoryEntry]  # usuarios activos, para asignar tareas
 
 
 @catalog_router.get("", response_model=Catalog)
 def catalog(_: Agent = Depends(current_agent), db: Session = Depends(get_db)) -> Catalog:
-    """Áreas y motivos activos, para transferir y cerrar casos."""
+    """Áreas, motivos y usuarios activos, para transferir, cerrar y asignar tareas."""
     areas = db.scalars(select(Area).where(Area.is_active).order_by(Area.sort_order, Area.id))
     reasons = db.scalars(
         select(ContactReason).where(ContactReason.is_active).order_by(ContactReason.name)
     )
+    agents = db.scalars(select(Agent).where(Agent.is_active).order_by(Agent.name))
     return Catalog(
         areas=[AreaOut.model_validate(a) for a in areas],
         reasons=[ReasonOut.model_validate(r) for r in reasons],
+        agents=[AgentDirectoryEntry.model_validate(a) for a in agents],
     )
 
 

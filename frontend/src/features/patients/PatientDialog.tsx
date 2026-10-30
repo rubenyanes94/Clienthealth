@@ -5,6 +5,7 @@ import type { Patient } from "@/api/types";
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { useToast } from "@/components/ui/Toast";
+import { patientPhone } from "@/lib/format";
 import { EMPTY_PATIENT, type PatientErrors, type PatientForm, validatePatient } from "./form";
 import { PatientFields } from "./PatientFields";
 
@@ -18,7 +19,7 @@ function PatientFormBody({ patient, onClose }: { patient?: Patient; onClose: () 
           first_name: patient.first_name,
           last_name: patient.last_name,
           national_id: patient.national_id,
-          phone: patient.phone,
+          phone: patientPhone(patient.phone),
           email: patient.email,
         }
       : EMPTY_PATIENT,

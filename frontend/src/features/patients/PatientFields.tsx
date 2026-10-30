@@ -23,7 +23,7 @@ const FIELDS: {
     name: "phone",
     label: "Teléfono",
     type: "tel",
-    placeholder: "0414-1234567",
+    placeholder: "4141234567",
     autoComplete: "off",
   },
   { name: "email", label: "Correo", type: "email", autoComplete: "off" },
