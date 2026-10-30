@@ -1,7 +1,15 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 import { api, unwrap } from "./client";
-import type { CaseSearch, CaseStage, InboxFilter, PatientIn, Priority } from "./types";
+import type {
+  AgentIn,
+  AgentPatch,
+  CaseSearch,
+  CaseStage,
+  InboxFilter,
+  PatientIn,
+  Priority,
+} from "./types";
 
 export const keys = {
   me: ["me"] as const,
@@ -340,6 +348,71 @@ export function useContactConsent(conversationId: number) {
 }
 
 type MetricsQuery = { from: string; to: string; area_id?: number };
+
+/** Indicadores del módulo de Casos (supervisores). */
+export function useCaseMetrics(query: MetricsQuery) {
+  const options = { params: { query } };
+  const common = {
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+    placeholderData: keepPreviousData,
+  };
+  return {
+    overview: useQuery({
+      queryKey: ["case-metrics", "overview", query],
+      queryFn: () => unwrap(api.GET("/api/metrics/cases/overview", options)),
+      ...common,
+    }),
+    byArea: useQuery({
+      queryKey: ["case-metrics", "by-area", query],
+      queryFn: () => unwrap(api.GET("/api/metrics/cases/by-area", options)),
+      ...common,
+    }),
+    byAgent: useQuery({
+      queryKey: ["case-metrics", "by-agent", query],
+      queryFn: () => unwrap(api.GET("/api/metrics/cases/by-agent", options)),
+      ...common,
+    }),
+    reasons: useQuery({
+      queryKey: ["case-metrics", "reasons", query],
+      queryFn: () => unwrap(api.GET("/api/metrics/cases/reasons", options)),
+      ...common,
+    }),
+  };
+}
+
+export function useUsers() {
+  return useQuery({
+    queryKey: ["users"],
+    queryFn: () => unwrap(api.GET("/api/admin/agents")),
+  });
+}
+
+export function useSaveUser(id?: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: AgentIn | AgentPatch) =>
+      id === undefined
+        ? unwrap(api.POST("/api/admin/agents", { body: body as AgentIn }))
+        : unwrap(
+            api.PATCH("/api/admin/agents/{agent_id}", {
+              params: { path: { agent_id: id } },
+              body: body as AgentPatch,
+            }),
+          ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["users"] });
+      await queryClient.invalidateQueries({ queryKey: keys.me });
+    },
+  });
+}
+
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: (body: { current_password: string; new_password: string }) =>
+      unwrap(api.POST("/api/auth/password", { body })),
+  });
+}
 
 /** Indicadores (supervisores). Se refrescan cada minuto con la pestaña visible. */
 export function useMetrics(query: MetricsQuery) {

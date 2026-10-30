@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.sql.elements import ColumnElement
 
 from app.db.base import utcnow
-from app.models import Agent, Patient
+from app.models import Agent, Patient, PatientEvent
+from app.models.enums import PatientEventType
 from app.services.conversations import ConflictError, NotFoundError
 
 DUPLICATE_ID = "Ya existe un paciente con esa cédula"
@@ -26,11 +27,24 @@ def create(db: Session, agent: Agent, fields: dict[str, Any]) -> Patient:
     patient = Patient(**fields, created_by_agent_id=agent.id)
     db.add(patient)
     try:
+        db.flush()
+        record(db, patient, PatientEventType.CREATED, agent)
         db.commit()
     except IntegrityError as exc:  # dos registros simultáneos de la misma cédula
         db.rollback()
         raise ConflictError(DUPLICATE_ID) from exc
     return patient
+
+
+def record(
+    db: Session,
+    patient: Patient,
+    type: PatientEventType,
+    agent: Agent,
+    data: dict[str, Any] | None = None,
+) -> None:
+    db.add(PatientEvent(patient_id=patient.id, type=type, agent_id=agent.id, data=data or {}))
+    patient.updated_at = utcnow()
 
 
 def get(db: Session, patient_id: int) -> Patient:
@@ -40,13 +54,16 @@ def get(db: Session, patient_id: int) -> Patient:
     return patient
 
 
-def update(db: Session, patient_id: int, fields: dict[str, Any]) -> Patient:
+def update(db: Session, agent: Agent, patient_id: int, fields: dict[str, Any]) -> Patient:
     patient = get(db, patient_id)
     if "national_id" in fields:
         _ensure_id_free(db, fields["national_id"], except_id=patient.id)
-    for name, value in fields.items():
-        setattr(patient, name, value)
-    patient.updated_at = utcnow()
+    changed = [name for name, value in fields.items() if getattr(patient, name) != value]
+    if not changed:
+        return patient
+    for name in changed:
+        setattr(patient, name, fields[name])
+    record(db, patient, PatientEventType.UPDATED, agent, {"fields": changed})
     try:
         db.commit()
     except IntegrityError as exc:

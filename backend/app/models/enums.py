@@ -83,6 +83,12 @@ class CaseStage(StrEnum):
     CLOSED = "closed"
 
 
+class PatientEventType(StrEnum):
+    CREATED = "created"
+    UPDATED = "updated"
+    CONTACT_LINKED = "contact_linked"
+
+
 class CaseEventType(StrEnum):
     CREATED = "created"
     STAGE_CHANGED = "stage_changed"

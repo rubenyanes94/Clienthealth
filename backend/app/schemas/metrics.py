@@ -94,6 +94,47 @@ class CsatDay(BaseModel):
     satisfied: float | None
 
 
+# --- Módulo de Casos -------------------------------------------------------------------------
+
+
+class CaseTimes(BaseModel):
+    """Por paso del caso por un área. Minutos hábiles."""
+
+    received: int
+    closed: int
+    time_to_attention: Durations
+    goal: Ratio
+    attention_time: Durations
+    waiting_time: Durations
+
+
+class CaseOverview(CaseTimes):
+    date_from: date
+    date_to: date
+    goal_minutes: int
+    created: int
+    urgent: int
+    resolution_time: Durations
+    resolution_rate: Ratio
+    transfer_rate: Ratio
+    reopen_rate: Ratio
+
+
+class CaseAreaRow(CaseTimes):
+    area_id: int
+    name: str
+
+
+class CaseAgentRow(BaseModel):
+    agent_id: int
+    name: str
+    attended: int
+    resolved: int
+    closed: int
+    transferred: int
+    attention_time: Durations
+
+
 # --- Calendario hábil ------------------------------------------------------------------------
 
 

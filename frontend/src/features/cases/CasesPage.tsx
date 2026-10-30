@@ -28,11 +28,11 @@ const OPTIONS: { value: StageFilter; label: string }[] = [
   { value: "closed", label: "Cerrados" },
 ];
 
-/** Tiempo en la etapa actual. Un caso por atender se compara con la meta de su área. */
-function StageTimer({ item }: { item: CaseSummary }) {
+/** Tiempo en la etapa actual. Un caso por atender se compara con la meta, igual en todas las áreas. */
+function StageTimer({ item, goalMinutes }: { item: CaseSummary; goalMinutes: number }) {
   const now = useNow();
   if (item.stage === "closed") return <span className="text-ink-3">—</span>;
-  const goal = item.area.sla_first_response_minutes * 60_000;
+  const goal = goalMinutes * 60_000;
   const waited = now - new Date(item.stage_changed_at).getTime();
   let tone: Tone = "neutral";
   if (item.stage === "registered") {
@@ -192,7 +192,7 @@ export function CasesPage() {
                     </div>
                   </td>
                   <td className="px-4 py-4">
-                    <StageTimer item={c} />
+                    <StageTimer item={c} goalMinutes={cases.data.goal_minutes} />
                   </td>
                   <td className="pr-5">
                     <span className="flex size-8 items-center justify-center rounded-full bg-surface-3 text-ink-3 transition group-hover:bg-ink group-hover:text-white">

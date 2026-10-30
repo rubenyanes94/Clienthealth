@@ -58,3 +58,17 @@ export function usePeriod() {
     setArea: (id: number | null) => update({ areaId: id }),
   };
 }
+
+export type View = "casos" | "whatsapp";
+
+/** Casos o WhatsApp: se miden distinto y por eso van separados. Queda en la URL. */
+export function useView() {
+  const [search, setSearch] = useSearchParams();
+  const view: View = search.get("vista") === "whatsapp" ? "whatsapp" : "casos";
+  const setView = (next: View) => {
+    const params = new URLSearchParams(search);
+    params.set("vista", next);
+    setSearch(params, { replace: true });
+  };
+  return { view, setView };
+}

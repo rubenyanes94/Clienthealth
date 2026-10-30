@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import current_agent
+from app.core.config import get_settings
 from app.db.base import utcnow
 from app.db.session import get_db
 from app.models import Agent, Case, CaseNote, Patient
@@ -71,6 +72,7 @@ def search(
     return CasePage(
         items=[CaseSummary.model_validate(c) for c in rows[:PAGE_SIZE]],
         next_cursor=str(offset + PAGE_SIZE) if len(rows) > PAGE_SIZE else None,
+        goal_minutes=get_settings().case_goal_minutes,
     )
 
 

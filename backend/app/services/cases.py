@@ -12,7 +12,7 @@ from sqlalchemy.sql.elements import ColumnElement
 from app.core.config import get_settings
 from app.db.base import utcnow
 from app.models import Agent, Area, Case, CaseEvent, CaseNote, ContactReason, Patient
-from app.models.enums import CaseEventType, CaseStage, EventType, Priority
+from app.models.enums import CaseEventType, CaseStage, EventType, PatientEventType, Priority
 from app.services import conversations, events, patients
 from app.services.conversations import ConflictError, ConversationError, NotFoundError
 
@@ -91,7 +91,7 @@ def create(
     db.flush()
     events.record_case(db, case, CaseEventType.CREATED, agent=agent, data={"area_id": area.id})
     if conversation is not None:
-        _link_contact(db, patient, conversation.contact_id)
+        _link_contact(db, agent, patient, conversation.contact_id)
         events.record(
             db, conversation, EventType.CASE_CREATED, agent=agent, data={"case_id": case.id}
         )
@@ -99,12 +99,13 @@ def create(
     return case
 
 
-def _link_contact(db: Session, patient: Patient, contact_id: int) -> None:
+def _link_contact(db: Session, agent: Agent, patient: Patient, contact_id: int) -> None:
     """Recuerda el WhatsApp del paciente. Un número ya vinculado no se reasigna: una madre puede
     escribir por varios hijos."""
     taken = db.scalar(select(Patient.id).where(Patient.contact_id == contact_id))
     if patient.contact_id is None and taken is None:
         patient.contact_id = contact_id
+        patients.record(db, patient, PatientEventType.CONTACT_LINKED, agent)
 
 
 def update(db: Session, agent: Agent, case_id: int, fields: dict[str, Any]) -> Case:
@@ -293,11 +294,13 @@ def live(db: Session, now: datetime) -> dict[str, Any]:
             "oldest_registered_at": None,
         }
 
-    def count(bucket: dict[str, Any], case: Case, area: Area) -> None:
+    goal = timedelta(minutes=get_settings().case_goal_minutes)
+
+    def count(bucket: dict[str, Any], case: Case) -> None:
         bucket[case.stage.value] += 1
         if case.stage != CaseStage.REGISTERED:
             return
-        if (now - case.stage_changed_at) >= timedelta(minutes=area.sla_first_response_minutes):
+        if (now - case.stage_changed_at) >= goal:
             bucket["late"] += 1
         oldest = bucket["oldest_registered_at"]
         if oldest is None or case.stage_changed_at < oldest:
@@ -308,9 +311,8 @@ def live(db: Session, now: datetime) -> dict[str, Any]:
     totals = blank()
     urgent = 0
     for case in db.scalars(select(Case).where(Case.stage.in_(LIVE_STAGES))):
-        area = areas[case.area_id]
-        count(totals, case, area)
-        count(per_area.setdefault(area.id, blank()), case, area)
+        count(totals, case)
+        count(per_area.setdefault(case.area_id, blank()), case)
         urgent += case.priority == Priority.HIGH
 
     today = _start_of_today(now)
@@ -344,6 +346,7 @@ def live(db: Session, now: datetime) -> dict[str, Any]:
     return {
         **totals,
         "urgent": urgent,
+        "goal_minutes": get_settings().case_goal_minutes,
         "created_today": sum(c.opened_at >= today for c in recent),
         "closed_today": closed_today or 0,
         "first_attention_median": _median(first_attention),

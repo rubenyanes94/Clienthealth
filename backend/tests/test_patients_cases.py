@@ -271,3 +271,66 @@ def test_waiting_time_is_discounted_from_resolution(lab_agent, db):
     live = lab_agent.get("/api/cases/live").json()
     assert live["resolution_median"] == 30.0
     assert live["first_attention_median"] == 10.0
+
+
+def test_every_change_is_recorded_under_who_made_it(lab_agent, db):
+    """Cada persona con su cuenta: el historial dice quién hizo cada cosa."""
+    make_agent(db, "luis@cm.test", area_slug="seguros-facturacion")
+    luis = login("luis@cm.test")
+
+    patient = new_patient(lab_agent)
+    edited = luis.patch(f"/api/patients/{patient['id']}", json={"email": "otro@example.com"})
+    assert edited.status_code == 200
+    # Guardar sin cambios no deja rastro falso.
+    luis.patch(f"/api/patients/{patient['id']}", json={"email": "otro@example.com"})
+    history = lab_agent.get(f"/api/patients/{patient['id']}").json()["events"]
+    assert [(e["type"], e["agent"]["name"]) for e in history] == [
+        ("created", "Lab"),
+        ("updated", "Luis"),
+    ]
+    assert history[1]["data"] == {"fields": ["email"]}  # el nombre del campo, nunca su valor
+
+    case = new_case(lab_agent, db, patient["id"])
+    cid = case["id"]
+    to_stage(luis, cid, "in_progress")
+    lab_agent.post(f"/api/cases/{cid}/take")
+    luis.post(f"/api/cases/{cid}/notes", json={"body": "Nota"})
+    lab_agent.patch(f"/api/cases/{cid}", json={"subject": "Asunto nuevo"})
+    luis.post(f"/api/cases/{cid}/transfer", json={"area_id": area_id(db, "imagenologia")})
+    detail = lab_agent.get(f"/api/cases/{cid}").json()
+    assert [(e["type"], e["agent"]["name"]) for e in detail["events"]] == [
+        ("created", "Lab"),
+        ("stage_changed", "Luis"),
+        ("taken", "Lab"),
+        ("note_added", "Luis"),
+        ("updated", "Lab"),
+        ("transferred", "Luis"),
+    ]
+    assert detail["notes"][0]["agent"]["name"] == "Luis"
+
+
+def test_contact_link_is_recorded(anon, lab_agent, db):
+    patient_says(anon, "Hola")
+    patient_says(anon, "2")
+    cid = lab_agent.get("/api/inbox", params={"filter": "queue"}).json()["items"][0]["id"]
+    patient = new_patient(lab_agent)
+    new_case(lab_agent, db, patient["id"], conversation_id=cid)
+    history = lab_agent.get(f"/api/patients/{patient['id']}").json()["events"]
+    assert history[-1]["type"] == "contact_linked" and history[-1]["agent"]["name"] == "Lab"
+
+
+def test_goal_is_the_same_for_all_areas(lab_agent, db):
+    patient = new_patient(lab_agent)
+    # Atención al paciente tiene meta de WhatsApp de 10 min; la de casos es 15 en todas.
+    case = new_case(lab_agent, db, patient["id"], slug="atencion-paciente")
+    db.execute(
+        update(Case)
+        .where(Case.id == case["id"])
+        .values(stage_changed_at=utcnow() - timedelta(minutes=12))
+    )
+    db.commit()
+    live = lab_agent.get("/api/cases/live").json()
+    assert live["goal_minutes"] == 15
+    assert live["late"] == 0
+    page = lab_agent.post("/api/cases/search", json={}).json()
+    assert page["goal_minutes"] == 15

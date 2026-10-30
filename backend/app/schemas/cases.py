@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, EmailStr, Field
 
-from app.models.enums import CaseEventType, CaseStage, Priority
+from app.models.enums import CaseEventType, CaseStage, PatientEventType, Priority
 from app.schemas import ORM, AgentRef, AreaRef, CaseBrief, PatientRef, ReasonRef
 
 
@@ -60,8 +60,17 @@ class PatientOut(PatientRef):
     created_at: datetime
 
 
+class PatientEventOut(ORM):
+    id: int
+    type: PatientEventType
+    agent: AgentRef | None
+    data: dict[str, list[str]]
+    created_at: datetime
+
+
 class PatientDetail(PatientOut):
     cases: list[CaseBrief] = []
+    events: list[PatientEventOut] = []
 
 
 class PatientSearchIn(BaseModel):
@@ -165,6 +174,7 @@ class CaseSearchIn(BaseModel):
 class CasePage(BaseModel):
     items: list[CaseSummary]
     next_cursor: str | None
+    goal_minutes: int
 
 
 class StageCounts(BaseModel):
@@ -182,6 +192,7 @@ class AreaLive(StageCounts):
 
 class CasesLive(StageCounts):
     urgent: int
+    goal_minutes: int
     created_today: int
     closed_today: int
     first_attention_median: float | None

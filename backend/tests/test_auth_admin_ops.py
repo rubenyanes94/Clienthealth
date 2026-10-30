@@ -1,11 +1,13 @@
 from datetime import timedelta
 
+from fastapi.testclient import TestClient
 from sqlalchemy import func, select, update
 
 from app.db.base import utcnow
+from app.main import app
 from app.models import Conversation, ConversationEvent
 from app.models.enums import AgentRole, EventType
-from tests.conftest import login, make_agent, patient_says
+from tests.conftest import PASSWORD, login, make_agent, patient_says
 
 
 def test_login_sets_httponly_cookie_and_logout(db, anon):
@@ -87,3 +89,45 @@ def test_live_metrics_and_simulator(db, supervisor, lab_agent):
     assert live["queued"] == 1
     assert live["urgent_queued"] == 1
     assert live["agents_online"] == 2
+
+
+def test_user_changes_own_password(db, lab_agent):
+    wrong = lab_agent.post(
+        "/api/auth/password",
+        json={"current_password": "equivocada", "new_password": "una-clave-nueva-1"},
+    )
+    assert wrong.status_code == 400
+    short = lab_agent.post(
+        "/api/auth/password", json={"current_password": PASSWORD, "new_password": "corta"}
+    )
+    assert short.status_code == 422
+    done = lab_agent.post(
+        "/api/auth/password",
+        json={"current_password": PASSWORD, "new_password": "una-clave-nueva-1"},
+    )
+    assert done.status_code == 204
+    fresh = TestClient(app, base_url="https://testserver")
+    assert (
+        fresh.post(
+            "/api/auth/login", json={"email": "lab@example.com", "password": PASSWORD}
+        ).status_code
+        == 401
+    )
+    assert (
+        fresh.post(
+            "/api/auth/login", json={"email": "lab@example.com", "password": "una-clave-nueva-1"}
+        ).status_code
+        == 200
+    )
+
+
+def test_admin_cannot_lock_itself_out(db):
+    me = make_agent(db, "admin@cm.test", AgentRole.ADMIN)
+    other = make_agent(db, "otro@cm.test")
+    admin = login("admin@cm.test")
+    for change in ({"is_active": False}, {"role": "agent"}):
+        assert admin.patch(f"/api/admin/agents/{me.id}", json=change).status_code == 409
+    assert admin.patch(f"/api/admin/agents/{me.id}", json={"name": "Nuevo"}).status_code == 200
+    assert (
+        admin.patch(f"/api/admin/agents/{other.id}", json={"is_active": False}).status_code == 200
+    )

@@ -110,3 +110,51 @@ def test_calendar_admin(db):
     duplicate = admin.post("/api/admin/holidays", json={"day": "2026-12-31", "name": "Otra vez"})
     assert duplicate.status_code == 409
     assert admin.delete(f"/api/admin/holidays/{created.json()['id']}").status_code == 204
+
+
+def test_case_metrics_from_real_flow(db, lab_agent, supervisor):
+    patient = lab_agent.post(
+        "/api/patients",
+        json={
+            "first_name": "María",
+            "last_name": "Pérez",
+            "national_id": "V1234567",
+            "phone": "04141234567",
+            "email": "m@example.com",
+        },
+    ).json()
+    lab = area_id(db, "laboratorio")
+    body = {"patient_id": patient["id"], "area_id": lab, "subject": "Resultados"}
+    cid = lab_agent.post("/api/cases", json=body).json()["id"]
+    for stage, extra in [
+        ("in_progress", {}),
+        ("resolved", {}),
+        ("closed", {"contact_reason_id": reason_id(db)}),
+    ]:
+        assert (
+            lab_agent.post(f"/api/cases/{cid}/stage", json={"stage": stage, **extra}).status_code
+            == 200
+        )
+
+    assert lab_agent.get("/api/metrics/cases/overview", params=params()).status_code == 403
+    data = supervisor.get("/api/metrics/cases/overview", params=params()).json()
+    assert data["created"] == 1 and data["closed"] == 1 and data["goal_minutes"] == 15
+    assert data["goal"]["denominator"] == 1
+    assert data["resolution_rate"]["value"] == 1.0
+
+    other = supervisor.get(
+        "/api/metrics/cases/overview", params=params(area_id=area_id(db, "imagenologia"))
+    ).json()
+    assert other["created"] == 0
+
+    areas = supervisor.get("/api/metrics/cases/by-area", params=params()).json()
+    assert [a["name"] for a in areas] == ["Laboratorio"]
+    agents = supervisor.get("/api/metrics/cases/by-agent", params=params()).json()
+    assert agents[0]["name"] == "Lab" and agents[0]["closed"] == 1
+    motives = supervisor.get("/api/metrics/cases/reasons", params=params()).json()
+    assert motives[0]["count"] == 1
+
+
+def test_whatsapp_panels_ignore_cases(db, lab_agent, supervisor):
+    data = supervisor.get("/api/metrics/overview", params=params()).json()
+    assert data["episodes"] == 0

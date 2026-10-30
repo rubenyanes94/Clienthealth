@@ -1,6 +1,6 @@
 # Atención al Paciente — Centro Médico San Bernardino
 
-Consola de atención al paciente (casos entre áreas, pacientes, bandeja de WhatsApp, bot, indicadores). **No** gestiona citas.
+Consola de atención al paciente (casos entre áreas, pacientes, bandeja de WhatsApp, bot, indicadores). Se enfoca solo en la atención: pivotea requerimientos entre áreas y mejora la comunicación con el paciente. **No** es un sistema clínico ni gestiona citas.
 La arquitectura, reglas y plan por fases están en [docs/INFRAESTRUCTURA.md](docs/INFRAESTRUCTURA.md):
 léelo antes de cambiar algo estructural. Las reglas de §15 son obligatorias.
 

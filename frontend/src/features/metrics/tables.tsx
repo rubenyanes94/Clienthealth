@@ -6,7 +6,7 @@ type AreaRow = components["schemas"]["AreaRow"];
 type AgentRow = components["schemas"]["AgentRow"];
 
 const th = "px-6 py-3 text-right font-medium first:text-left";
-const td = "px-6 py-3.5 text-right tabular-nums first:text-left";
+const td = "px-6 py-3.5 text-right whitespace-nowrap tabular-nums first:text-left";
 
 export function AreaTable({ rows }: { rows: AreaRow[] }) {
   if (rows.length === 0) return <Empty />;
@@ -75,6 +75,75 @@ export function AgentTable({ rows }: { rows: AgentRow[] }) {
                   <span className="ml-1 text-ink-3">({r.csat.responses})</span>
                 )}
               </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+type CaseAreaRow = components["schemas"]["CaseAreaRow"];
+type CaseAgentRow = components["schemas"]["CaseAgentRow"];
+
+export function CaseAreaTable({ rows }: { rows: CaseAreaRow[] }) {
+  if (rows.length === 0) return <Empty />;
+  return (
+    <div className="-mx-6 overflow-x-auto">
+      <table className="w-full min-w-[40rem] text-sm">
+        <thead className="text-xs text-ink-3">
+          <tr className="border-b border-line">
+            <th className={th}>Área</th>
+            <th className={th}>Recibidos</th>
+            <th className={th}>Hasta atender</th>
+            <th className={th}>Meta</th>
+            <th className={th}>En atención</th>
+            <th className={th}>En espera</th>
+            <th className={th}>Cerrados</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-line">
+          {rows.map((r) => (
+            <tr key={r.area_id}>
+              <td className={`${td} font-medium`}>{r.name}</td>
+              <td className={td}>{r.received}</td>
+              <td className={td}>{minutes(r.time_to_attention.median)}</td>
+              <td className={td}>{percent(r.goal.value)}</td>
+              <td className={td}>{minutes(r.attention_time.median)}</td>
+              <td className={td}>{minutes(r.waiting_time.median)}</td>
+              <td className={td}>{r.closed}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function CaseAgentTable({ rows }: { rows: CaseAgentRow[] }) {
+  if (rows.length === 0) return <Empty />;
+  return (
+    <div className="-mx-6 overflow-x-auto">
+      <table className="w-full min-w-[36rem] text-sm">
+        <thead className="text-xs text-ink-3">
+          <tr className="border-b border-line">
+            <th className={th}>Persona</th>
+            <th className={th}>Atendidos</th>
+            <th className={th}>En atención</th>
+            <th className={th}>Resueltos</th>
+            <th className={th}>Transferidos</th>
+            <th className={th}>Cerrados</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-line">
+          {rows.map((r) => (
+            <tr key={r.agent_id}>
+              <td className={`${td} font-medium`}>{r.name}</td>
+              <td className={td}>{r.attended}</td>
+              <td className={td}>{minutes(r.attention_time.median)}</td>
+              <td className={td}>{r.resolved}</td>
+              <td className={td}>{r.transferred}</td>
+              <td className={td}>{r.closed}</td>
             </tr>
           ))}
         </tbody>

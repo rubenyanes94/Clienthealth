@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, JSONType, UTCDateTime, utcnow
 from app.models.conversation import Contact, Conversation
-from app.models.enums import CaseEventType, CaseStage, Priority
+from app.models.enums import CaseEventType, CaseStage, PatientEventType, Priority
 from app.models.org import Agent, Area, ContactReason, enum_col
 
 
@@ -31,6 +31,23 @@ class Patient(Base):
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
     contact: Mapped[Contact | None] = relationship()
+    events: Mapped[list["PatientEvent"]] = relationship(order_by="PatientEvent.id")
+
+
+class PatientEvent(Base):
+    """Quién registró o cambió cada ficha. `data` guarda nombres de campos, nunca sus valores."""
+
+    __tablename__ = "patient_events"
+    __table_args__ = (Index("ix_patient_events_patient", "patient_id", "id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    patient_id: Mapped[int] = mapped_column(ForeignKey("patients.id"))
+    type: Mapped[PatientEventType] = mapped_column(enum_col(PatientEventType, "patient_event_type"))
+    agent_id: Mapped[int | None] = mapped_column(ForeignKey("agents.id"))
+    data: Mapped[dict[str, Any]] = mapped_column(JSONType, default=dict)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
+
+    agent: Mapped[Agent | None] = relationship()
 
 
 class Case(Base):

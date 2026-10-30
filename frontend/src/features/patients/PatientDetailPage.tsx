@@ -2,12 +2,32 @@ import { ArrowLeft, ChevronRight, Pencil, Plus } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { usePatient } from "@/api/hooks";
+import type { PatientEvent } from "@/api/types";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { displayPhone, formatDateTime } from "@/lib/format";
 import { NewCaseDialog } from "../cases/NewCaseDialog";
 import { StagePill } from "../cases/StagePill";
 import { PatientDialog } from "./PatientDialog";
+
+const FIELD_LABEL: Record<string, string> = {
+  first_name: "nombre",
+  last_name: "apellido",
+  national_id: "cédula",
+  phone: "teléfono",
+  email: "correo",
+};
+
+function eventText(event: PatientEvent): string {
+  switch (event.type) {
+    case "created":
+      return "Paciente registrado";
+    case "updated":
+      return `Editado: ${(event.data.fields ?? []).map((f) => FIELD_LABEL[f] ?? f).join(", ")}`;
+    case "contact_linked":
+      return "Vinculado a su número de WhatsApp";
+  }
+}
 
 export function PatientDetailPage() {
   const id = Number(useParams().id);
@@ -88,6 +108,28 @@ export function PatientDetailPage() {
                     </li>
                   ))}
                 </ul>
+              )}
+            </section>
+            <section className="mb-3 rounded-3xl bg-surface p-6 shadow-card sm:p-8">
+              <h2 className="mb-4 text-lg font-semibold">Historial de la ficha</h2>
+              {p.events.length === 0 ? (
+                <p className="text-sm text-ink-3">Sin cambios registrados.</p>
+              ) : (
+                <ol className="relative ml-2 border-l border-line">
+                  {[...p.events].reverse().map((e) => (
+                    <li key={e.id} className="mb-5 ml-6 last:mb-0">
+                      <span
+                        className="absolute -left-[5px] mt-1.5 size-2.5 rounded-full bg-ink ring-4 ring-white"
+                        aria-hidden
+                      />
+                      <div className="text-sm font-medium">{eventText(e)}</div>
+                      <div className="text-xs text-ink-3">
+                        {formatDateTime(e.created_at)}
+                        {e.agent && ` · ${e.agent.name}`}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
               )}
             </section>
             <PatientDialog open={dialog === "edit"} onClose={() => setDialog(null)} patient={p} />

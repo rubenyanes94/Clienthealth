@@ -4,10 +4,10 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import current_agent
 from app.core.config import get_settings
-from app.core.security import create_access_token, verify_password
+from app.core.security import create_access_token, hash_password, verify_password
 from app.db.session import get_db
 from app.models import Agent
-from app.schemas import AgentOut, LoginIn
+from app.schemas import AgentOut, LoginIn, PasswordChangeIn
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -43,6 +43,19 @@ def logout(response: Response) -> None:
     response.delete_cookie(
         get_settings().session_cookie_name, path="/", secure=True, httponly=True, samesite="strict"
     )
+
+
+@router.post("/password", status_code=status.HTTP_204_NO_CONTENT)
+def change_password(
+    body: PasswordChangeIn,
+    agent: Agent = Depends(current_agent),
+    db: Session = Depends(get_db),
+) -> None:
+    """Cada persona pone su propia clave: lo que se haga con su cuenta solo pudo hacerlo ella."""
+    if not verify_password(body.current_password, agent.password_hash):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "La contraseña actual no es correcta")
+    agent.password_hash = hash_password(body.new_password)
+    db.commit()
 
 
 @router.get("/me", response_model=AgentOut)

@@ -2,7 +2,9 @@
 
 Documento de arquitectura e infraestructura para implementar el proyecto con Claude Code.
 Producto: consola de atención al cliente para un centro médico (módulo de casos entre áreas,
-pacientes, bandeja de WhatsApp, hitos de servicio e indicadores de satisfacción y tiempos). **No** gestiona agendas médicas ni citas.
+pacientes, bandeja de WhatsApp, hitos de servicio e indicadores de satisfacción y tiempos).
+Se enfoca **únicamente en la atención al paciente**: pivotea requerimientos entre áreas y mejora la
+comunicación con el paciente. **No** es un sistema clínico ni gestiona agendas médicas ni citas.
 
 > **Para Claude Code:** lee este documento completo antes de escribir código. Las secciones
 > "Reglas" (§15) y "Plan por fases" (§14) son obligatorias. Si algo aquí contradice el código que ya
@@ -158,6 +160,7 @@ transacción. Sin evento, la acción no cuenta en los indicadores.
 |---|---|
 | `GET /health` | Salud + verificación de la conexión a la base |
 | `POST /auth/login` · `POST /auth/logout` · `GET /auth/me` | Sesión por cookie httpOnly |
+| `POST /auth/password` | Cada persona cambia su propia contraseña |
 | `GET /inbox?filter=&cursor=` | Bandeja (`open`, `queue`, `mine`, `pending`, `closed`, `bot`, `all`) |
 | `GET /inbox/changes?since=<iso>` | Polling: IDs de conversaciones con cambios desde `since` |
 | `GET /conversations/{id}` | Detalle + mensajes + eventos |
@@ -175,6 +178,7 @@ transacción. Sin evento, la acción no cuenta en los indicadores.
 | `GET /cases/live` | Situación de la sala: conteos y tiempos, sin datos de pacientes |
 | `PUT /contacts/{id}/consent` | Registrar o retirar el consentimiento para mensajes proactivos (NPS) |
 | `GET /metrics/overview?from=&to=&area_id=` · `/by-hour` · `/by-agent` · `/by-area` · `/reasons` · `/csat-daily` | Paneles (supervisor). Definiciones en `docs/METRICAS.md` |
+| `GET /metrics/cases/overview?from=&to=&area_id=` · `/by-area` · `/by-agent` · `/reasons` | Indicadores del módulo de Casos (supervisor) |
 | `GET /metrics/live` | Cola, urgentes, espera más antigua, agentes conectados |
 | `GET/POST/PATCH /admin/areas` · `/admin/reasons` · `/admin/faqs` · `/admin/agents` | Catálogos (rol admin) |
 | `GET/PUT /admin/business-hours?area_id=` · `GET/POST/DELETE /admin/holidays` | Calendario hábil (rol admin) |
@@ -235,7 +239,7 @@ transacción. Sin evento, la acción no cuenta en los indicadores.
   botones en píldora de 44 px o más y campos a 16 px.
 - **React Router** para la navegación: `/casos`, `/casos/:id`, `/conversaciones`,
   `/conversaciones/:id`, `/conversaciones/:id/registro`, `/pacientes`, `/pacientes/:id`, `/paneles`,
-  `/informes`, `/login`.
+  `/informes`, `/usuarios`, `/login`.
 - **TanStack Query** para el estado del servidor (caché, polling, invalidaciones).
 - **openapi-typescript + openapi-fetch**: tipos generados desde `/api/openapi.json`. Script:
   `npm run gen:api`. Prohibido escribir a mano los tipos de la API.
@@ -377,6 +381,10 @@ Las conversaciones contienen datos de salud, así que estas reglas aplican a tod
   (incluidas las conversaciones del bot) y los paneles; `admin` además gestiona catálogos y agentes.
   Los pacientes y los casos del módulo de Casos los ven y gestionan **todas las áreas** (decisión del
   producto, §20). Se verifica en el backend, nunca solo en la interfaz.
+- **Cuentas personales**: cada persona tiene su cuenta y todo lo que hace queda a su nombre
+  (`agent_id` en `conversation_events`, `case_events` y `patient_events`). Se administran en
+  `/usuarios` (rol admin) y cada quien cambia su contraseña en «Mi cuenta». Un admin no puede
+  quitarse sus propios permisos.
 - **Búsquedas por POST**: `q` puede llevar un nombre o una cédula; en la URL quedaría en los logs de
   acceso. Por eso `/patients/search` y `/cases/search` no son `GET`.
 - `CaseEvent.data` tampoco contiene texto del paciente: las notas viven en `case_notes` y el evento
@@ -463,7 +471,8 @@ Cada fase termina con sus pruebas en verde y un deploy de preview funcionando.
 - Textos de las preguntas frecuentes del bot (el horario del seed es un marcador provisional).
 - Número de WhatsApp Business, verificación del negocio en Meta y plantillas (CSAT, NPS, reapertura).
 - Canales de la fase 1: ¿solo WhatsApp, o también Instagram y web?
-- Metas de atención por área para el módulo de Casos: hoy reutiliza la de 1ª respuesta de WhatsApp.
+- Valor de la meta del módulo de Casos: una sola para todas las áreas, 15 min de forma provisional
+  (`CASE_GOAL_MINUTES`).
 - Plan de Vercel (Pro para producción) y región de la base de Neon (la más cercana: `us-east`).
 
 ---
@@ -557,4 +566,11 @@ Diferencias con la versión original de este documento y su motivo:
 6. **Permisos**: todas las áreas ven y gestionan todos los casos. Las conversaciones conservan sus
    reglas: si el agente no puede ver el chat vinculado, el caso no ofrece el enlace.
 7. **Tiempo real**: polling cada 5 s, como en §8. Los indicadores de la sala están en
-   `docs/METRICAS.md`. Aún no están en Paneles ni Informes, que siguen midiendo WhatsApp.
+   `docs/METRICAS.md`.
+8. **Paneles e Informes** tienen dos vistas: **Casos** (tiempos de atención, `services/case_metrics.py`)
+   y **WhatsApp** (tiempos de respuesta, `services/metrics.py`). Los casos se miden por *tramo*: cada
+   paso por un área, para que cada una responda por su propio tiempo.
+9. **Meta**: `CASE_GOAL_MINUTES`, una sola para todas las áreas. `areas.sla_first_response_minutes`
+   queda solo para el SLA de WhatsApp.
+10. **Historial**: `patient_events` registra quién creó, editó o vinculó cada ficha, con los nombres
+    de los campos y nunca sus valores.

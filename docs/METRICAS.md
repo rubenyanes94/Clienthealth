@@ -116,6 +116,38 @@ período. Es suficiente para el volumen esperado (miles de conversaciones al mes
 vuelven lentos, `daily-rollup` puede guardar contadores diarios por área (numeradores y
 denominadores, no porcentajes) sin cambiar estas definiciones.
 
+## Módulo de Casos: Paneles e Informes
+
+Implementación en `backend/app/services/case_metrics.py` y pruebas en
+`backend/tests/test_case_metrics.py`. Son **minutos hábiles**, como el resto de este documento; solo
+la sala en tiempo real usa minutos de reloj.
+
+Un **tramo** es el paso de un caso por un área: empieza con `CREATED` o `TRANSFERRED` y termina con
+la siguiente transferencia o con la resolución. Un caso transferido tiene un tramo en cada área, y
+cada área responde por el suyo. Un tramo pertenece al período por la **fecha en que empieza**, y un
+caso por la fecha en que se crea.
+
+| Indicador | Definición |
+|---|---|
+| Recibidos | Tramos que empiezan en el período: casos creados más los que llegan transferidos |
+| Tiempo hasta atender | Por tramo: desde que empieza hasta su primer paso a *En atención*. Promedio, mediana y p90 |
+| Meta cumplida | `cumplen / (cumplen + incumplen)`. Cumple si el tiempo hasta atender es ≤ `CASE_GOAL_MINUTES`. Incumple si es mayor, o si sigue sin atender (o se transfirió sin atender) y superó la meta. Sin atender y dentro de la meta queda fuera |
+| Tiempo en atención | Por tramo terminado: suma del tiempo en *En atención*. Los tramos en curso no cuentan |
+| En espera | Por tramo terminado que estuvo en *En espera*: suma de ese tiempo. Los tramos que nunca esperaron no cuentan |
+| Resolución | Por caso resuelto: tiempo hasta atender más tiempo en atención en todas sus áreas. No cuenta las esperas ni lo que estuvo cerrado antes de reabrirse |
+| Tasa de resolución | `casos resueltos / casos creados` |
+| Tasa de transferencia | `casos con más de un tramo / casos creados` |
+| Tasa de reapertura | `casos reabiertos / casos cerrados alguna vez`, entre los creados en el período |
+| Cerrados | Pasos a *Cerrado* en el período, por **fecha de cierre** y en el área donde se cerró |
+| Motivos | Los mismos cierres, agrupados por el motivo actual del caso |
+
+Con **filtro de área**: los tiempos usan solo los tramos de esa área, y los casos creados son los que
+han pasado por ella.
+
+**Por persona**, según la cuenta que registró cada evento en el período: *atendidos* (quien inició la
+atención en cada tramo), *en atención* (la mediana de minutos de los periodos que esa persona inició,
+por tramo), *resueltos*, *cerrados* y *transferidos*.
+
 ## Sala en tiempo real (módulo de Casos)
 
 Implementación en `backend/app/services/cases.py` (`live`) y pruebas en
@@ -128,7 +160,7 @@ local de Caracas.
 | Registrado, En atención, En espera, Resuelto | Casos que están ahora en esa etapa, en total y por área |
 | Urgentes | Casos no cerrados con prioridad alta |
 | Espera más larga | Tiempo desde `stage_changed_at` del caso *Registrado* más antiguo. Transferir reinicia el conteo |
-| Fuera de meta | Casos *Registrados* que llevan en su área al menos `sla_first_response_minutes` |
+| Fuera de meta | Casos *Registrados* que llevan en su área al menos `CASE_GOAL_MINUTES` (15 por defecto, igual para todas las áreas) |
 | Creados hoy / Cerrados hoy | Casos con `opened_at` / `closed_at` en el día |
 | 1ª atención (mediana) | Casos abiertos hoy: desde la apertura hasta su primer `STAGE_CHANGED` a `in_progress`. Los aún no atendidos no cuentan |
 | Resolución (mediana) | Casos con `resolved_at` hoy: desde la apertura hasta `resolved_at`, descontando el tiempo en *En espera*. Si se reabrió, el tiempo entre medias cuenta |

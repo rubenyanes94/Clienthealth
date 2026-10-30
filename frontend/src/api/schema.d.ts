@@ -92,6 +92,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/auth/password": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Change Password
+     * @description Cada persona pone su propia clave: lo que se haga con su cuenta solo pudo hacerlo ella.
+     */
+    post: operations["change_password_api_auth_password_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/auth/me": {
     parameters: {
       query?: never;
@@ -658,6 +678,74 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/metrics/cases/overview": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Case Overview */
+    get: operations["case_overview_api_metrics_cases_overview_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/metrics/cases/by-area": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Case By Area */
+    get: operations["case_by_area_api_metrics_cases_by_area_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/metrics/cases/by-agent": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Case By Agent */
+    get: operations["case_by_agent_api_metrics_cases_by_agent_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/metrics/cases/reasons": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Case Reasons */
+    get: operations["case_reasons_api_metrics_cases_reasons_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/admin/areas": {
     parameters: {
       query?: never;
@@ -1091,6 +1179,37 @@ export interface components {
       /** Name */
       name: string;
     };
+    /** CaseAgentRow */
+    CaseAgentRow: {
+      /** Agent Id */
+      agent_id: number;
+      /** Name */
+      name: string;
+      /** Attended */
+      attended: number;
+      /** Resolved */
+      resolved: number;
+      /** Closed */
+      closed: number;
+      /** Transferred */
+      transferred: number;
+      attention_time: components["schemas"]["Durations"];
+    };
+    /** CaseAreaRow */
+    CaseAreaRow: {
+      /** Received */
+      received: number;
+      /** Closed */
+      closed: number;
+      time_to_attention: components["schemas"]["Durations"];
+      goal: components["schemas"]["Ratio"];
+      attention_time: components["schemas"]["Durations"];
+      waiting_time: components["schemas"]["Durations"];
+      /** Area Id */
+      area_id: number;
+      /** Name */
+      name: string;
+    };
     /** CaseBrief */
     CaseBrief: {
       /** Id */
@@ -1212,12 +1331,45 @@ export interface components {
        */
       created_at: string;
     };
+    /** CaseOverview */
+    CaseOverview: {
+      /** Received */
+      received: number;
+      /** Closed */
+      closed: number;
+      time_to_attention: components["schemas"]["Durations"];
+      goal: components["schemas"]["Ratio"];
+      attention_time: components["schemas"]["Durations"];
+      waiting_time: components["schemas"]["Durations"];
+      /**
+       * Date From
+       * Format: date
+       */
+      date_from: string;
+      /**
+       * Date To
+       * Format: date
+       */
+      date_to: string;
+      /** Goal Minutes */
+      goal_minutes: number;
+      /** Created */
+      created: number;
+      /** Urgent */
+      urgent: number;
+      resolution_time: components["schemas"]["Durations"];
+      resolution_rate: components["schemas"]["Ratio"];
+      transfer_rate: components["schemas"]["Ratio"];
+      reopen_rate: components["schemas"]["Ratio"];
+    };
     /** CasePage */
     CasePage: {
       /** Items */
       items: components["schemas"]["CaseSummary"][];
       /** Next Cursor */
       next_cursor: string | null;
+      /** Goal Minutes */
+      goal_minutes: number;
     };
     /** CasePatch */
     CasePatch: {
@@ -1329,6 +1481,8 @@ export interface components {
       oldest_registered_at?: string | null;
       /** Urgent */
       urgent: number;
+      /** Goal Minutes */
+      goal_minutes: number;
       /** Created Today */
       created_today: number;
       /** Closed Today */
@@ -1780,6 +1934,13 @@ export interface components {
        */
       date_to: string;
     };
+    /** PasswordChangeIn */
+    PasswordChangeIn: {
+      /** Current Password */
+      current_password: string;
+      /** New Password */
+      new_password: string;
+    };
     /** PatientDetail */
     PatientDetail: {
       /** Id */
@@ -1806,7 +1967,33 @@ export interface components {
        * @default []
        */
       cases: components["schemas"]["CaseBrief"][];
+      /**
+       * Events
+       * @default []
+       */
+      events: components["schemas"]["PatientEventOut"][];
     };
+    /** PatientEventOut */
+    PatientEventOut: {
+      /** Id */
+      id: number;
+      type: components["schemas"]["PatientEventType"];
+      agent: components["schemas"]["AgentRef"] | null;
+      /** Data */
+      data: {
+        [key: string]: string[];
+      };
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+    };
+    /**
+     * PatientEventType
+     * @enum {string}
+     */
+    PatientEventType: "created" | "updated" | "contact_linked";
     /** PatientIn */
     PatientIn: {
       /** First Name */
@@ -2180,6 +2367,37 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  change_password_api_auth_password_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PasswordChangeIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
       };
     };
   };
@@ -3295,6 +3513,138 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["CsatDay"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  case_overview_api_metrics_cases_overview_get: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+        area_id?: number | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CaseOverview"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  case_by_area_api_metrics_cases_by_area_get: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+        area_id?: number | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CaseAreaRow"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  case_by_agent_api_metrics_cases_by_agent_get: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+        area_id?: number | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CaseAgentRow"][];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  case_reasons_api_metrics_cases_reasons_get: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+        area_id?: number | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ReasonRow"][];
         };
       };
       /** @description Validation Error */

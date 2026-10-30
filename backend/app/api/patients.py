@@ -57,7 +57,7 @@ def get_patient(
 def update(
     patient_id: int,
     body: PatientPatch,
-    _: Agent = Depends(current_agent),
+    agent: Agent = Depends(current_agent),
     db: Session = Depends(get_db),
 ) -> Patient:
-    return svc.update(db, patient_id, body.model_dump(exclude_none=True))
+    return svc.update(db, agent, patient_id, body.model_dump(exclude_none=True))
