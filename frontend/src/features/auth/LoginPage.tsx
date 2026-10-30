@@ -12,7 +12,7 @@ export function LoginPage() {
   const [params] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const next = params.get("next")?.startsWith("/") ? params.get("next")! : "/conversaciones";
+  const next = params.get("next")?.startsWith("/") ? params.get("next")! : "/casos";
 
   if (me.data) return <Navigate to={next} replace />;
 

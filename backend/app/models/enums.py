@@ -72,3 +72,27 @@ class EventType(StrEnum):
     ABANDONED = "abandoned"
     SURVEY_SENT = "survey_sent"
     SURVEY_ANSWERED = "survey_answered"
+    CASE_CREATED = "case_created"  # se creó un caso del módulo de Casos desde esta conversación
+
+
+class CaseStage(StrEnum):
+    REGISTERED = "registered"  # en el área, nadie lo atiende todavía
+    IN_PROGRESS = "in_progress"
+    WAITING = "waiting"  # detenido: esperando al paciente, un resultado u otra persona
+    RESOLVED = "resolved"  # solucionado, falta confirmar y cerrar
+    CLOSED = "closed"
+
+
+class PatientEventType(StrEnum):
+    CREATED = "created"
+    UPDATED = "updated"
+    CONTACT_LINKED = "contact_linked"
+
+
+class CaseEventType(StrEnum):
+    CREATED = "created"
+    STAGE_CHANGED = "stage_changed"
+    TRANSFERRED = "transferred"
+    TAKEN = "taken"
+    UPDATED = "updated"
+    NOTE_ADDED = "note_added"

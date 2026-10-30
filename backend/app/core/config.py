@@ -50,6 +50,8 @@ class Settings(BaseSettings):
 
     cron_secret: str = ""
     timezone: str = "America/Caracas"
+    # Meta del módulo de Casos, igual para todas las áreas: minutos hasta empezar a atender.
+    case_goal_minutes: int = 15
 
     # Reglas de negocio (pendientes de confirmar con el centro, §16)
     reopen_window_hours: int = 48

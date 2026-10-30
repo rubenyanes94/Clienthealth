@@ -1,6 +1,6 @@
 # Atención al Paciente — Centro Médico San Bernardino
 
-Consola de atención al paciente (bandeja de WhatsApp, casos, bot, indicadores). **No** gestiona citas.
+Consola de atención al paciente (casos entre áreas, pacientes, bandeja de WhatsApp, bot, indicadores). Se enfoca solo en la atención: pivotea requerimientos entre áreas y mejora la comunicación con el paciente. **No** es un sistema clínico ni gestiona citas.
 La arquitectura, reglas y plan por fases están en [docs/INFRAESTRUCTURA.md](docs/INFRAESTRUCTURA.md):
 léelo antes de cambiar algo estructural. Las reglas de §15 son obligatorias.
 
@@ -31,7 +31,8 @@ npm run lint && npx tsc -b --noEmit && npm test && npm run build
 ## Reglas rápidas
 
 - Routers bajo `/api`; el frontend solo usa rutas relativas `/api/...`. Tipos de la API generados, nunca a mano.
-- Todo cambio de estado de un caso llama a `events.record(...)` en la misma transacción.
+- Todo cambio de estado llama a `events.record(...)` (conversaciones) o `events.record_case(...)` (casos) en la misma transacción.
+- Un *caso* (`Case`, módulo de Casos) no es una *conversación* (chat de WhatsApp): ver §20 de la infraestructura.
 - Los KPI se definen en [docs/METRICAS.md](docs/METRICAS.md); si cambias una fórmula, cambia el doc y su prueba.
 - Fechas: `utcnow()` y `UTCDateTime`. Nunca `datetime.now()` sin zona.
 - Prohibido loguear o mandar a Gemini texto, nombres, teléfonos o cédulas de pacientes.

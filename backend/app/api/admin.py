@@ -11,6 +11,7 @@ from app.api.deps import current_agent, require_admin
 from app.core.security import hash_password
 from app.db.session import get_db
 from app.models import Agent, Area, BusinessHours, ContactReason, FaqEntry, Holiday
+from app.models.enums import AgentRole
 from app.schemas import (
     AgentIn,
     AgentOut,
@@ -165,9 +166,19 @@ def create_agent(body: AgentIn, db: Session = Depends(get_db)):
 
 
 @router.patch("/agents/{agent_id}", response_model=AgentOut)
-def patch_agent(agent_id: int, body: AgentPatch, db: Session = Depends(get_db)):
+def patch_agent(
+    agent_id: int,
+    body: AgentPatch,
+    me: Agent = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
     agent = _get(db, Agent, agent_id)
     changes = body.model_dump(exclude_unset=True)
+    if agent.id == me.id and (
+        changes.get("is_active") is False or changes.get("role", AgentRole.ADMIN) != AgentRole.ADMIN
+    ):
+        # Evita que el centro se quede sin administrador por un toque equivocado.
+        raise HTTPException(status.HTTP_409_CONFLICT, "No puede quitarse sus propios permisos")
     if password := changes.pop("password", None):
         agent.password_hash = hash_password(password)
     for key, value in changes.items():

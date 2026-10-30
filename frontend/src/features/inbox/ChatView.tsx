@@ -1,5 +1,5 @@
-import { ArrowLeft, PanelRight } from "lucide-react";
-import { Fragment, useEffect, useRef } from "react";
+import { ArrowLeft, FolderPlus, PanelRight } from "lucide-react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { useConversationActions, useMe } from "@/api/hooks";
 import type { ConversationDetail } from "@/api/types";
@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { dayKey, displayPhone, formatDay } from "@/lib/format";
+import { NewCaseDialog } from "../cases/NewCaseDialog";
 import { StatusPill, UrgentPill } from "./bits";
 import { contactName, permissionsFor } from "./permissions";
 import { Composer } from "./Composer";
@@ -25,6 +26,7 @@ export function ChatView({
   const toast = useToast();
   const { simple } = useConversationActions(conversation.id);
   const scroller = useRef<HTMLDivElement>(null);
+  const [newCase, setNewCase] = useState(false);
   const perms = permissionsFor(conversation, me.data);
   const lastId = conversation.messages.at(-1)?.id;
   const canAccept =
@@ -71,6 +73,10 @@ export function ChatView({
             {conversation.status === "bot" ? "Intervenir" : "Aceptar"}
           </Button>
         )}
+        <Button onClick={() => setNewCase(true)} aria-label="Crear caso" title="Crear caso">
+          <FolderPlus className="size-4" aria-hidden />
+          <span className="hidden md:inline">Crear caso</span>
+        </Button>
         <Button
           variant="secondary"
           onClick={onToggleInspector}
@@ -78,7 +84,7 @@ export function ChatView({
           className="xl:hidden"
         >
           <PanelRight className="size-4" aria-hidden />
-          <span className="hidden sm:inline">Detalle</span>
+          <span className="hidden sm:inline lg:hidden">Detalle</span>
         </Button>
       </header>
 
@@ -111,6 +117,7 @@ export function ChatView({
         canNote={perms.canNote && conversation.status !== "closed"}
         blockedReason={perms.blockedReason}
       />
+      <NewCaseDialog open={newCase} onClose={() => setNewCase(false)} conversation={conversation} />
     </section>
   );
 }

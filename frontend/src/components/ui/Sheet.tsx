@@ -7,12 +7,14 @@ export function Sheet({
   onClose,
   title,
   description,
+  size = "md",
   children,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   description?: string;
+  size?: "md" | "lg";
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -28,7 +30,7 @@ export function Sheet({
       ref={ref}
       onClose={onClose}
       aria-label={title}
-      className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-3xl bg-surface p-0 text-ink shadow-pop backdrop:bg-zinc-950/40 backdrop:backdrop-blur-[3px]"
+      className={`m-auto ${size === "lg" ? "w-[min(56rem,calc(100vw-2rem))]" : "w-[min(32rem,calc(100vw-2rem))]"} rounded-3xl bg-surface p-0 text-ink shadow-pop backdrop:bg-zinc-950/40 backdrop:backdrop-blur-[3px]`}
     >
       {open && (
         <div className="p-7">

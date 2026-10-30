@@ -1,8 +1,10 @@
 # Infraestructura — Atención al Paciente
 
 Documento de arquitectura e infraestructura para implementar el proyecto con Claude Code.
-Producto: consola de atención al cliente para un centro médico (bandeja de WhatsApp, casos, hitos de
-servicio e indicadores de satisfacción y tiempos). **No** gestiona agendas médicas ni citas.
+Producto: consola de atención al cliente para un centro médico (módulo de casos entre áreas,
+pacientes, bandeja de WhatsApp, hitos de servicio e indicadores de satisfacción y tiempos).
+Se enfoca **únicamente en la atención al paciente**: pivotea requerimientos entre áreas y mejora la
+comunicación con el paciente. **No** es un sistema clínico ni gestiona agendas médicas ni citas.
 
 > **Para Claude Code:** lee este documento completo antes de escribir código. Las secciones
 > "Reglas" (§15) y "Plan por fases" (§14) son obligatorias. Si algo aquí contradice el código que ya
@@ -25,7 +27,7 @@ servicio e indicadores de satisfacción y tiempos). **No** gestiona agendas méd
 | Tiempo real | **Fase 1: polling** con TanStack Query. Fase 2 opcional: WebSockets de Vercel (beta) + Redis |
 | Tareas programadas | Vercel Cron. El diseño no depende de crons frecuentes (ver §9) |
 | Auth de agentes | JWT propio (`app/core/security.py`) entregado en **cookie httpOnly** |
-| Métricas | Calculadas **siempre** desde `conversation_events` (registro de eventos inmutable) |
+| Métricas | Calculadas **siempre** desde registros de eventos inmutables: `conversation_events` (WhatsApp) y `case_events` (casos) |
 | Repo | Monorepo en GitHub: `frontend/` + `backend/` + `vercel.json` en la raíz |
 
 ---
@@ -158,6 +160,7 @@ transacción. Sin evento, la acción no cuenta en los indicadores.
 |---|---|
 | `GET /health` | Salud + verificación de la conexión a la base |
 | `POST /auth/login` · `POST /auth/logout` · `GET /auth/me` | Sesión por cookie httpOnly |
+| `POST /auth/password` | Cada persona cambia su propia contraseña |
 | `GET /inbox?filter=&cursor=` | Bandeja (`open`, `queue`, `mine`, `pending`, `closed`, `bot`, `all`) |
 | `GET /inbox/changes?since=<iso>` | Polling: IDs de conversaciones con cambios desde `since` |
 | `GET /conversations/{id}` | Detalle + mensajes + eventos |
@@ -169,8 +172,13 @@ transacción. Sin evento, la acción no cuenta en los indicadores.
 | `POST /conversations/{id}/reopen` | Reabrir |
 | `GET /catalog` | Áreas y motivos activos (cualquier agente; para transferir y cerrar) |
 | `POST /copilot/{id}/summary` · `/suggest` · `/rewrite` · `/reason` | Copiloto Gemini |
+| `POST /patients/search` · `POST /patients` · `GET/PATCH /patients/{id}` | Fichas de pacientes (cualquier agente) |
+| `POST /cases/search` · `POST /cases` · `GET/PATCH /cases/{id}` | Casos. `conversation_id` opcional para crearlo desde un chat |
+| `POST /cases/{id}/stage` · `/transfer` · `/take` · `/notes` | Mover de etapa (el motivo es obligatorio al cerrar), cambiar de área, tomar y anotar |
+| `GET /cases/live` | Situación de la sala: conteos y tiempos, sin datos de pacientes |
 | `PUT /contacts/{id}/consent` | Registrar o retirar el consentimiento para mensajes proactivos (NPS) |
 | `GET /metrics/overview?from=&to=&area_id=` · `/by-hour` · `/by-agent` · `/by-area` · `/reasons` · `/csat-daily` | Paneles (supervisor). Definiciones en `docs/METRICAS.md` |
+| `GET /metrics/cases/overview?from=&to=&area_id=` · `/by-area` · `/by-agent` · `/reasons` | Indicadores del módulo de Casos (supervisor) |
 | `GET /metrics/live` | Cola, urgentes, espera más antigua, agentes conectados |
 | `GET/POST/PATCH /admin/areas` · `/admin/reasons` · `/admin/faqs` · `/admin/agents` | Catálogos (rol admin) |
 | `GET/PUT /admin/business-hours?area_id=` · `GET/POST/DELETE /admin/holidays` | Calendario hábil (rol admin) |
@@ -229,8 +237,9 @@ transacción. Sin evento, la acción no cuenta en los indicadores.
   `src/styles.css`, con soporte de modo oscuro. Estilo en blanco y negro pensado para tabletas
   (cada área usa una): menú lateral negro, tarjetas blancas muy redondeadas sobre lienzo gris,
   botones en píldora de 44 px o más y campos a 16 px.
-- **React Router** para la navegación: `/conversaciones`, `/conversaciones/:id`, `/casos`,
-  `/casos/:id`, `/paneles`, `/informes`, `/contactos`, `/login`.
+- **React Router** para la navegación: `/casos`, `/casos/:id`, `/conversaciones`,
+  `/conversaciones/:id`, `/conversaciones/:id/registro`, `/pacientes`, `/pacientes/:id`, `/paneles`,
+  `/informes`, `/usuarios`, `/login`.
 - **TanStack Query** para el estado del servidor (caché, polling, invalidaciones).
 - **openapi-typescript + openapi-fetch**: tipos generados desde `/api/openapi.json`. Script:
   `npm run gen:api`. Prohibido escribir a mano los tipos de la API.
@@ -368,9 +377,18 @@ Las conversaciones contienen datos de salud, así que estas reglas aplican a tod
 - **Logs**: prohibido registrar el texto de los mensajes, teléfonos, cédulas o diagnósticos. Solo se
   loguean IDs internos y tipos de evento.
 - `ConversationEvent.data` nunca contiene texto del paciente (hay una prueba que lo verifica).
-- **Roles**: `agent` ve la cola de su área y sus casos; `supervisor` ve todo (incluidas las
-  conversaciones del bot) y los paneles; `admin` además gestiona catálogos y agentes. Se verifica en
-  el backend, nunca solo en la interfaz.
+- **Roles**: en las conversaciones, `agent` ve la cola de su área y sus casos; `supervisor` ve todo
+  (incluidas las conversaciones del bot) y los paneles; `admin` además gestiona catálogos y agentes.
+  Los pacientes y los casos del módulo de Casos los ven y gestionan **todas las áreas** (decisión del
+  producto, §20). Se verifica en el backend, nunca solo en la interfaz.
+- **Cuentas personales**: cada persona tiene su cuenta y todo lo que hace queda a su nombre
+  (`agent_id` en `conversation_events`, `case_events` y `patient_events`). Se administran en
+  `/usuarios` (rol admin) y cada quien cambia su contraseña en «Mi cuenta». Un admin no puede
+  quitarse sus propios permisos.
+- **Búsquedas por POST**: `q` puede llevar un nombre o una cédula; en la URL quedaría en los logs de
+  acceso. Por eso `/patients/search` y `/cases/search` no son `GET`.
+- `CaseEvent.data` tampoco contiene texto del paciente: las notas viven en `case_notes` y el evento
+  guarda solo su ID (hay una prueba que lo verifica).
 - **Cookie de sesión**: `HttpOnly`, `Secure`, `SameSite=Strict`, con `Path=/`.
 - **Rate limit** en `/auth/login`, mediante el Firewall de Vercel o una regla simple en la base (fase 4).
 - **Encabezados de seguridad** en el servicio `web`: `Content-Security-Policy`,
@@ -418,6 +436,10 @@ Cada fase termina con sus pruebas en verde y un deploy de preview funcionando.
 - ✔ Criterio: pruebas con escenarios de eventos fijos que comparan cada KPI con el valor esperado,
   incluidas pausas, fuera de horario y reaperturas.
 
+**Módulo de Casos** ✅
+- Pacientes, casos con cinco etapas gestionados entre áreas, tablero de la sala en tiempo real y
+  creación de casos desde una conversación. Detalles en §20.
+
 **Fase 4 — Endurecimiento**
 - Rate limits, Sentry, auditoría de accesos a conversaciones, exportación a Excel y, opcionalmente,
   WebSockets.
@@ -449,6 +471,8 @@ Cada fase termina con sus pruebas en verde y un deploy de preview funcionando.
 - Textos de las preguntas frecuentes del bot (el horario del seed es un marcador provisional).
 - Número de WhatsApp Business, verificación del negocio en Meta y plantillas (CSAT, NPS, reapertura).
 - Canales de la fase 1: ¿solo WhatsApp, o también Instagram y web?
+- Valor de la meta del módulo de Casos: una sola para todas las áreas, 15 min de forma provisional
+  (`CASE_GOAL_MINUTES`).
 - Plan de Vercel (Pro para producción) y región de la base de Neon (la más cercana: `us-east`).
 
 ---
@@ -518,3 +542,35 @@ Diferencias con la versión original de este documento y su motivo:
 5. **Datos de demostración**: `python -m scripts.demo_data` genera 14 días de actividad ficticia para
    ver los paneles en desarrollo (`--purge` la borra). Se niega a correr en producción.
 6. **Contactos**: la pantalla `/contactos` pasa a la fase 4.
+
+---
+
+## 20. Notas de implementación (módulo de Casos)
+
+1. **Dos cosas distintas**: una *conversación* es un chat de WhatsApp; un *caso* es una gestión del
+   módulo de Casos, con paciente y área. Un caso puede nacer en la sala, sin chat. Antes la pantalla
+   «Casos» listaba conversaciones: ahora es este módulo, y el registro de eventos de cada chat pasó a
+   `/conversaciones/:id/registro`.
+2. **Pacientes** (`patients`): nombre, apellido, cédula, teléfono y correo, todos obligatorios por
+   decisión del centro. La cédula es única y se guarda sin puntos ni guiones (`V12345678`). El
+   teléfono se guarda como `wa_id` (`0414…` → `58414…`) para encontrar al paciente desde su chat.
+   Reemplaza a la pantalla `/contactos` prevista para la fase 4.
+3. **Etapas** (`NEXT_STAGES` en `services/cases.py`): Registrado → En atención → En espera ↔ En
+   atención → Resuelto → Cerrado. Resuelto puede volver a atención y Cerrado se reabre en atención.
+   Cerrar exige motivo. Una tableta con la pantalla vieja recibe 409 en vez de pisar el cambio.
+4. **Transferir** deja el caso *Registrado* y sin responsable en la nueva área, que debe tomarlo.
+5. **Desde una conversación**: `POST /cases` con `conversation_id` (exige poder ver el chat) registra
+   `CASE_CREATED` en la conversación y vincula el número al paciente (`patients.contact_id`). Un
+   número ya vinculado no se reasigna: una madre puede escribir por varios hijos. Cambiar la etapa de
+   un caso **no** escribe al paciente por WhatsApp ni cierra el chat.
+6. **Permisos**: todas las áreas ven y gestionan todos los casos. Las conversaciones conservan sus
+   reglas: si el agente no puede ver el chat vinculado, el caso no ofrece el enlace.
+7. **Tiempo real**: polling cada 5 s, como en §8. Los indicadores de la sala están en
+   `docs/METRICAS.md`.
+8. **Paneles e Informes** tienen dos vistas: **Casos** (tiempos de atención, `services/case_metrics.py`)
+   y **WhatsApp** (tiempos de respuesta, `services/metrics.py`). Los casos se miden por *tramo*: cada
+   paso por un área, para que cada una responda por su propio tiempo.
+9. **Meta**: `CASE_GOAL_MINUTES`, una sola para todas las áreas. `areas.sla_first_response_minutes`
+   queda solo para el SLA de WhatsApp.
+10. **Historial**: `patient_events` registra quién creó, editó o vinculó cada ficha, con los nombres
+    de los campos y nunca sus valores.

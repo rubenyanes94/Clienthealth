@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from app.models.enums import (
     AgentRole,
+    CaseStage,
     ConversationStatus,
     EventType,
     MessageDirection,
@@ -26,6 +27,11 @@ class ORM(BaseModel):
 class LoginIn(BaseModel):
     email: str = Field(min_length=3, max_length=255)
     password: str = Field(min_length=1, max_length=200)
+
+
+class PasswordChangeIn(BaseModel):
+    current_password: str = Field(min_length=1, max_length=200)
+    new_password: str = Field(min_length=10, max_length=200)
 
 
 class AreaOut(ORM):
@@ -203,12 +209,31 @@ class ConversationSummary(ORM):
     last_message_sender: SenderType | None = None
 
 
+class PatientRef(ORM):
+    id: int
+    first_name: str
+    last_name: str
+    national_id: str
+    phone: str
+
+
+class CaseBrief(ORM):
+    id: int
+    subject: str
+    stage: CaseStage
+    area: AreaRef
+    opened_at: datetime
+
+
 class ConversationDetail(ConversationSummary):
     contact_reason: ReasonRef | None
     messages: list[MessageOut]
     events: list[EventOut]
     surveys: list[SurveyOut]
     csat_skip_reason: str | None = None
+    # Paciente vinculado a este número de WhatsApp y casos creados desde la conversación.
+    patient: PatientRef | None = None
+    cases: list[CaseBrief] = []
 
 
 class InboxPage(BaseModel):

@@ -14,6 +14,7 @@ import type { ConversationDetail } from "@/api/types";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { displayPhone, EVENT_LABEL, formatDateTime } from "@/lib/format";
+import { StagePill } from "../cases/StagePill";
 import { CloseDialog, TransferDialog } from "./CaseActions";
 import { StatusPill, SurveyPill, UrgentPill, WaitTimer } from "./bits";
 
@@ -135,6 +136,29 @@ export function Inspector({
         </div>
       )}
 
+      <Section title="Casos">
+        {conversation.cases.length === 0 ? (
+          <p className="text-sm text-ink-3">Aún no se ha creado un caso desde esta conversación.</p>
+        ) : (
+          <ul className="space-y-2">
+            {conversation.cases.map((c) => (
+              <li key={c.id}>
+                <Link
+                  to={`/casos/${c.id}`}
+                  className="block rounded-2xl p-3 ring-1 ring-line ring-inset transition hover:bg-surface-2"
+                >
+                  <span className="block truncate text-sm font-medium">{c.subject}</span>
+                  <span className="mt-1.5 flex items-center gap-2 text-xs text-ink-3">
+                    <StagePill stage={c.stage} />
+                    <span className="truncate">{c.area.name}</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+
       <Section title="Copiloto">
         <CopilotSummary key={conversation.id} conversationId={conversation.id} />
       </Section>
@@ -184,7 +208,7 @@ export function Inspector({
         title="Actividad"
         action={
           <Link
-            to={`/casos/${conversation.id}`}
+            to={`/conversaciones/${conversation.id}/registro`}
             className="flex h-9 items-center gap-1.5 rounded-full bg-surface-3 px-3.5 text-xs font-medium text-ink-2 hover:bg-ink hover:text-white"
           >
             Registro completo <ExternalLink className="size-3" aria-hidden />
