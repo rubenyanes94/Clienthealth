@@ -10,6 +10,7 @@ from app.db.session import get_db
 from app.models import Agent, Case, CaseNote, CaseTask, Patient
 from app.models.enums import CaseStage, CaseTaskStatus, Priority
 from app.schemas.cases import (
+    CaseAssignIn,
     CaseDetail,
     CaseIn,
     CaseNoteIn,
@@ -148,6 +149,16 @@ def take(
     case_id: int, agent: Agent = Depends(current_agent), db: Session = Depends(get_db)
 ) -> CaseDetail:
     return to_detail(db, agent, svc.take(db, agent, case_id))
+
+
+@router.post("/{case_id}/assign", response_model=CaseDetail)
+def assign(
+    case_id: int,
+    body: CaseAssignIn,
+    agent: Agent = Depends(current_agent),
+    db: Session = Depends(get_db),
+) -> CaseDetail:
+    return to_detail(db, agent, svc.assign(db, agent, case_id, body.agent_id))
 
 
 @router.post("/{case_id}/notes", response_model=CaseNoteOut, status_code=status.HTTP_201_CREATED)

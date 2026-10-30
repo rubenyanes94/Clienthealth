@@ -6,6 +6,7 @@ import { Field } from "@/components/ui/Field";
 import { Segmented } from "@/components/ui/Segmented";
 import { fieldClass, Sheet } from "@/components/ui/Sheet";
 import { useToast } from "@/components/ui/Toast";
+import { PersonSelect } from "./PersonSelect";
 
 type DialogProps = { item: CaseDetail; open: boolean; onClose: () => void };
 
@@ -207,6 +208,45 @@ export function EditCaseDialog({ item, open, onClose }: DialogProps) {
   return (
     <Sheet open={open} onClose={onClose} title="Editar caso">
       <EditCaseForm item={item} onClose={onClose} />
+    </Sheet>
+  );
+}
+
+export function AssignCaseDialog({ item, open, onClose }: DialogProps) {
+  const { assign } = useCaseActions(item.id);
+  const toast = useToast();
+  const [person, setPerson] = useState<number | "">("");
+
+  return (
+    <Sheet
+      open={open}
+      onClose={onClose}
+      title="Asignar caso"
+      description="La persona recibe una notificación y queda como responsable. Puede ser de cualquier área."
+    >
+      <Field label="Asignar a" htmlFor="case-assign-person" required>
+        <PersonSelect
+          id="case-assign-person"
+          value={person}
+          onChange={setPerson}
+          className={fieldClass}
+        />
+      </Field>
+      <Footer
+        onClose={onClose}
+        label="Asignar"
+        disabled={!person || assign.isPending}
+        onConfirm={() =>
+          person &&
+          assign.mutate(person, {
+            onSuccess: () => {
+              toast.ok("Caso asignado");
+              onClose();
+            },
+            onError: (e) => toast.error(e.message),
+          })
+        }
+      />
     </Sheet>
   );
 }

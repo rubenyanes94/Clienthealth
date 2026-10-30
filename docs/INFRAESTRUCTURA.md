@@ -176,6 +176,8 @@ transacción. Sin evento, la acción no cuenta en los indicadores.
 | `POST /cases/search` · `POST /cases` · `GET/PATCH /cases/{id}` | Casos. `conversation_id` opcional para crearlo desde un chat |
 | `POST /cases/{id}/stage` · `/transfer` · `/take` · `/notes` | Mover de etapa (el motivo es obligatorio al cerrar), cambiar de área, tomar y anotar |
 | `POST /cases/{id}/tasks` · `/tasks/{id}/complete` · `/tasks/{id}/cancel` · `GET /cases/tasks/mine` | Tareas del caso y las pendientes de quien tiene la sesión |
+| `POST /cases/{id}/assign` | Poner un caso a cargo de una persona de cualquier área (le llega una notificación) |
+| `GET /notifications` · `POST /notifications/{id}/read` · `/notifications/read-all` | Centro de notificaciones de quien tiene la sesión |
 | `GET /cases/live` | Situación de la sala: conteos y tiempos, sin datos de pacientes |
 | `PUT /contacts/{id}/consent` | Registrar o retirar el consentimiento para mensajes proactivos (NPS) |
 | `GET /metrics/overview?from=&to=&area_id=` · `/by-hour` · `/by-agent` · `/by-area` · `/reasons` · `/csat-daily` | Paneles (supervisor). Definiciones en `docs/METRICAS.md` |
@@ -580,3 +582,13 @@ Diferencias con la versión original de este documento y su motivo:
     nada al paciente. Quien la completa o cancela queda registrado aunque no sea a quien se le asignó.
     Un caso no se puede cerrar con tareas pendientes. `/catalog` incluye los usuarios activos para
     poder asignarlas. Sus indicaciones viven en la tarea y nunca en `CaseEvent.data`.
+12. **Notificaciones** (`notifications`): avisan a una persona cuando le asignan una tarea
+    (`task_assigned`) o un caso (`case_assigned`). Se crean en la misma transacción que la asignación
+    y **no** se avisa a quien se asigna algo a sí mismo. No guardan texto: apuntan al caso y a la tarea,
+    y el título y el cuerpo se arman al mostrarlas (nunca hay copias de datos del paciente). Solo las
+    ve su destinatario; una ajena responde 404. La campana está en el encabezado de cada pantalla, antes del botón de acción
+    (`NotificationBell`); un círculo rojo indica que hay algo sin leer. Hace polling cada 5 s y muestra
+    un aviso breve cuando llega algo nuevo. El panel
+    muestra las 30 más recientes y no hay borrado ni purga automática.
+13. **Asignar un caso** (`POST /cases/{id}/assign`) es distinto de «Tomar caso»: lo hace otra persona
+    sobre alguien (de cualquier área), registra el evento `ASSIGNED` y notifica. No cambia la etapa.

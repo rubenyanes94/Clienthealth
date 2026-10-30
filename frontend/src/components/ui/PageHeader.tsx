@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { NotificationBell } from "@/features/notifications/NotificationCenter";
 
 /** Banner de cabecera: tarjeta blanca con título grande y una forma decorativa en grises. */
 export function PageHeader({
@@ -25,7 +26,10 @@ export function PageHeader({
           <h1 className="text-3xl font-bold">{title}</h1>
           {subtitle && <p className="mt-1.5 max-w-xl text-sm text-ink-3">{subtitle}</p>}
         </div>
-        {children}
+        <div className="flex flex-wrap items-center gap-3">
+          <NotificationBell />
+          {children}
+        </div>
       </div>
     </header>
   );

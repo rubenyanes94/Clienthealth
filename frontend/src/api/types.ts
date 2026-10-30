@@ -34,4 +34,5 @@ export type AgentRole = S["AgentRole"];
 export type CaseTask = S["CaseTaskOut"];
 export type CaseTaskType = S["CaseTaskType"];
 export type MyTask = S["MyTask"];
+export type AppNotification = S["NotificationOut"];
 export type InboxFilter = "open" | "queue" | "mine" | "pending" | "closed" | "bot" | "all";

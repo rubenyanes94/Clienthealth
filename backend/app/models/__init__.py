@@ -1,6 +1,7 @@
 from app.models.calendar import BusinessHours, Holiday
 from app.models.case import Case, CaseEvent, CaseNote, CaseTask, Patient, PatientEvent
 from app.models.conversation import Contact, Conversation, ConversationEvent, Message, Survey
+from app.models.notification import Notification
 from app.models.org import Agent, Area, ContactReason, FaqEntry
 
 __all__ = [
@@ -18,6 +19,7 @@ __all__ = [
     "FaqEntry",
     "Holiday",
     "Message",
+    "Notification",
     "Patient",
     "PatientEvent",
     "Survey",

@@ -1,12 +1,13 @@
 import clsx from "clsx";
 import { useState } from "react";
-import { useCatalog, useMe, useTaskActions } from "@/api/hooks";
+import { useTaskActions } from "@/api/hooks";
 import type { CaseDetail, CaseTaskType, Priority } from "@/api/types";
 import { Button } from "@/components/ui/Button";
 import { Field, invalidFieldClass } from "@/components/ui/Field";
 import { Segmented } from "@/components/ui/Segmented";
 import { fieldClass, Sheet } from "@/components/ui/Sheet";
 import { useToast } from "@/components/ui/Toast";
+import { PersonSelect } from "./PersonSelect";
 import { TASK_ICON, TASK_LABEL, TASK_TYPES } from "./tasks";
 
 const PRIORITIES: { value: Priority; label: string }[] = [
@@ -15,8 +16,6 @@ const PRIORITIES: { value: Priority; label: string }[] = [
 ];
 
 function NewTaskForm({ item, onClose }: { item: CaseDetail; onClose: () => void }) {
-  const me = useMe();
-  const catalog = useCatalog();
   const { create } = useTaskActions(item.id);
   const toast = useToast();
   const [type, setType] = useState<CaseTaskType>("call");
@@ -24,15 +23,6 @@ function NewTaskForm({ item, onClose }: { item: CaseDetail; onClose: () => void 
   const [priority, setPriority] = useState<Priority>("normal");
   const [notes, setNotes] = useState("");
   const [missing, setMissing] = useState(false);
-
-  const agents = catalog.data?.agents ?? [];
-  const groups = [
-    ...(catalog.data?.areas ?? []).map((a) => ({
-      label: a.name,
-      people: agents.filter((p) => p.area_id === a.id),
-    })),
-    { label: "Sin área", people: agents.filter((p) => p.area_id === null) },
-  ].filter((g) => g.people.length > 0);
 
   const submit = () => {
     if (assignee === "") {
@@ -90,24 +80,12 @@ function NewTaskForm({ item, onClose }: { item: CaseDetail; onClose: () => void 
           required
           error={missing && assignee === "" ? "Complete este campo" : undefined}
         >
-          <select
+          <PersonSelect
             id="task-assignee"
             value={assignee}
-            onChange={(e) => setAssignee(e.target.value ? Number(e.target.value) : "")}
+            onChange={setAssignee}
             className={clsx(fieldClass, missing && assignee === "" && invalidFieldClass)}
-          >
-            <option value="">Seleccione…</option>
-            {groups.map((g) => (
-              <optgroup key={g.label} label={g.label}>
-                {g.people.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                    {p.id === me.data?.id ? " (usted)" : ""}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+          />
         </Field>
         <div>
           <span className="mb-1.5 block text-sm font-medium">Prioridad</span>

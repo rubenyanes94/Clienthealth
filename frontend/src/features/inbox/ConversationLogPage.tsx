@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router";
 import { useCatalog, useConversation } from "@/api/hooks";
 import type { ConversationEvent } from "@/api/types";
 import { Avatar } from "@/components/ui/Avatar";
+import { NotificationBell } from "@/features/notifications/NotificationCenter";
 import { displayPhone, EVENT_LABEL, formatDateTime } from "@/lib/format";
 import { StatusPill, SurveyPill, UrgentPill } from "./bits";
 import { contactName } from "./permissions";
@@ -56,12 +57,15 @@ export function ConversationLogPage() {
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-5xl px-3 py-3 sm:px-4 md:py-0">
-        <Link
-          to={`/conversaciones/${id}`}
-          className="mb-4 inline-flex h-11 items-center gap-2 rounded-full bg-surface px-5 text-sm font-medium text-ink-2 shadow-card transition hover:text-ink"
-        >
-          <ArrowLeft className="size-4" aria-hidden /> Volver al chat
-        </Link>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <Link
+            to={`/conversaciones/${id}`}
+            className="inline-flex h-11 items-center gap-2 rounded-full bg-surface px-5 text-sm font-medium text-ink-2 shadow-card transition hover:text-ink"
+          >
+            <ArrowLeft className="size-4" aria-hidden /> Volver al chat
+          </Link>
+          <NotificationBell />
+        </div>
         {conversation.error && <p className="text-sm text-danger">{conversation.error.message}</p>}
         {c && (
           <>

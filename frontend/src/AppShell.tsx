@@ -13,6 +13,7 @@ import { useState } from "react";
 import { NavLink, Outlet } from "react-router";
 import { useCasesLive, useInboxChanges, useLiveMetrics, useLogout, useMe } from "@/api/hooks";
 import { Avatar } from "@/components/ui/Avatar";
+import { useNotificationToasts } from "./features/notifications/useNotificationToasts";
 import { AccountDialog } from "./features/users/AccountDialog";
 
 const NAV = [
@@ -40,6 +41,7 @@ export function AppShell() {
   const logout = useLogout();
   const [account, setAccount] = useState(false);
   useInboxChanges(Boolean(me.data));
+  useNotificationToasts(Boolean(me.data));
 
   return (
     <div className="flex h-dvh flex-col bg-canvas md:flex-row md:gap-3 md:p-3">
@@ -112,7 +114,6 @@ export function AppShell() {
             ),
           )}
         </ul>
-
         {live.data && (
           <dl className="mt-4 hidden w-16 space-y-2 rounded-2xl bg-white/10 px-1 py-3 text-center [@media(min-height:60rem)]:md:block">
             {(

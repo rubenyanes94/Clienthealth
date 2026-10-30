@@ -175,6 +175,11 @@ export function useCaseActions(id: number) {
         unwrap(api.POST("/api/cases/{case_id}/transfer", { ...path, body: { area_id } })),
       onSettled: refresh,
     }),
+    assign: useMutation({
+      mutationFn: (agent_id: number) =>
+        unwrap(api.POST("/api/cases/{case_id}/assign", { ...path, body: { agent_id } })),
+      onSettled: refresh,
+    }),
     take: useMutation({
       mutationFn: () => unwrap(api.POST("/api/cases/{case_id}/take", path)),
       onSettled: refresh,
@@ -187,6 +192,36 @@ export function useCaseActions(id: number) {
     note: useMutation({
       mutationFn: (body: string) =>
         unwrap(api.POST("/api/cases/{case_id}/notes", { ...path, body: { body } })),
+      onSettled: refresh,
+    }),
+  };
+}
+
+export function useNotifications(enabled = true) {
+  return useQuery({
+    queryKey: ["notifications"],
+    enabled,
+    queryFn: () => unwrap(api.GET("/api/notifications")),
+    refetchInterval: CASE_POLL_MS,
+    refetchIntervalInBackground: false,
+  });
+}
+
+export function useNotificationActions() {
+  const queryClient = useQueryClient();
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ["notifications"] });
+  return {
+    read: useMutation({
+      mutationFn: (id: number) =>
+        unwrap(
+          api.POST("/api/notifications/{notification_id}/read", {
+            params: { path: { notification_id: id } },
+          }),
+        ),
+      onSettled: refresh,
+    }),
+    readAll: useMutation({
+      mutationFn: () => unwrap(api.POST("/api/notifications/read-all")),
       onSettled: refresh,
     }),
   };
