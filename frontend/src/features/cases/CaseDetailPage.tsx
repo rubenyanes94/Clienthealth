@@ -11,16 +11,18 @@ import {
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router";
 import { useCase, useCaseActions, useCatalog, useMe } from "@/api/hooks";
-import type { CaseDetail, CaseEvent, CaseStage } from "@/api/types";
+import type { CaseDetail, CaseEvent, CaseStage, CaseTaskType } from "@/api/types";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Pill } from "@/components/ui/Pill";
 import { Segmented } from "@/components/ui/Segmented";
 import { useToast } from "@/components/ui/Toast";
-import { displayPhone, formatDateTime } from "@/lib/format";
+import { patientPhone, formatDateTime } from "@/lib/format";
 import { CloseCaseDialog, EditCaseDialog, TransferCaseDialog } from "./CaseDialogs";
 import { StagePath } from "./StagePath";
 import { STAGE_LABEL, stepLabel } from "./stages";
+import { TASK_LABEL } from "./tasks";
+import { TasksCard } from "./TasksCard";
 
 type Tab = "detalles" | "notas" | "actividad";
 
@@ -51,6 +53,15 @@ function useEventText() {
       }
       case "note_added":
         return "Nota agregada";
+      case "task_created": {
+        const person = catalog.data?.agents.find((a) => a.id === d.assigned_agent_id)?.name;
+        const label = TASK_LABEL[d.task_type as CaseTaskType];
+        return person ? `Tarea «${label}» asignada a ${person}` : `Tarea «${label}» creada`;
+      }
+      case "task_completed":
+        return `Tarea «${TASK_LABEL[d.task_type as CaseTaskType]}» completada`;
+      case "task_cancelled":
+        return `Tarea «${TASK_LABEL[d.task_type as CaseTaskType]}» cancelada`;
     }
   };
 }
@@ -312,12 +323,13 @@ export function CaseDetailPage() {
                       </div>
                       <div className="truncate text-sm text-ink-3">{c.patient.national_id}</div>
                       <div className="truncate text-sm text-ink-3">
-                        {displayPhone(c.patient.phone)}
+                        {patientPhone(c.patient.phone)}
                       </div>
                     </div>
                     <ChevronRight className="size-4 shrink-0 text-ink-3" aria-hidden />
                   </div>
                 </Link>
+                <TasksCard item={c} />
                 {c.conversation_id !== null && (
                   <div className="rounded-3xl bg-surface p-5 shadow-card">
                     <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold">

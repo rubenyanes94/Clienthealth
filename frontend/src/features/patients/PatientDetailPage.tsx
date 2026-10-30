@@ -5,7 +5,7 @@ import { usePatient } from "@/api/hooks";
 import type { PatientEvent } from "@/api/types";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
-import { displayPhone, formatDateTime } from "@/lib/format";
+import { patientPhone, formatDateTime } from "@/lib/format";
 import { NewCaseDialog } from "../cases/NewCaseDialog";
 import { StagePill } from "../cases/StagePill";
 import { PatientDialog } from "./PatientDialog";
@@ -70,7 +70,7 @@ export function PatientDetailPage() {
               <dl className="mt-6 grid gap-4 border-t border-line pt-5 sm:grid-cols-2 lg:grid-cols-4">
                 {[
                   ["Cédula", p.national_id],
-                  ["Teléfono", displayPhone(p.phone)],
+                  ["Teléfono", patientPhone(p.phone)],
                   ["Correo", p.email],
                   ["Registrado", formatDateTime(p.created_at)],
                 ].map(([label, value]) => (

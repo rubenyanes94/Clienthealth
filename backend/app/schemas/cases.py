@@ -4,7 +4,14 @@ from typing import Annotated, Literal
 
 from pydantic import AfterValidator, BaseModel, EmailStr, Field
 
-from app.models.enums import CaseEventType, CaseStage, PatientEventType, Priority
+from app.models.enums import (
+    CaseEventType,
+    CaseStage,
+    CaseTaskStatus,
+    CaseTaskType,
+    PatientEventType,
+    Priority,
+)
 from app.schemas import ORM, AgentRef, AreaRef, CaseBrief, PatientRef, ReasonRef
 
 
@@ -17,13 +24,20 @@ def normalize_national_id(value: str) -> str:
 
 
 def normalize_phone(value: str) -> str:
-    """Solo dígitos y con código de país: 0414-1234567 pasa a 584141234567, como en WhatsApp."""
+    """El formato es 4141234567. Se guarda con código de país (584141234567), como en WhatsApp.
+
+    También acepta 0414-1234567 y +58 414 1234567, y números extranjeros con su código de país.
+    """
     digits = re.sub(r"\D", "", value)
-    if len(digits) == 11 and digits.startswith("0"):
-        digits = "58" + digits[1:]
-    if not 8 <= len(digits) <= 15:
-        raise ValueError("Teléfono no válido")
-    return digits
+    if re.fullmatch(r"0\d{10}", digits):
+        digits = digits[1:]
+    if re.fullmatch(r"[1-9]\d{9}", digits):
+        return "58" + digits
+    if re.fullmatch(r"58[1-9]\d{9}", digits):
+        return digits
+    if re.fullmatch(r"[1-9]\d{10,14}", digits) and not digits.startswith("58"):
+        return digits
+    raise ValueError("Teléfono no válido")
 
 
 def _clean_name(value: str) -> str:
@@ -129,6 +143,26 @@ class CaseEventOut(ORM):
     created_at: datetime
 
 
+class CaseTaskIn(BaseModel):
+    type: CaseTaskType
+    assigned_agent_id: int
+    priority: Priority = Priority.NORMAL
+    notes: str = Field(default="", max_length=1000)
+
+
+class CaseTaskOut(ORM):
+    id: int
+    type: CaseTaskType
+    status: CaseTaskStatus
+    priority: Priority
+    notes: str
+    assigned_agent: AgentRef
+    created_by: AgentRef | None
+    finished_by: AgentRef | None
+    created_at: datetime
+    finished_at: datetime | None
+
+
 class CaseSummary(ORM):
     id: int
     subject: str
@@ -145,15 +179,27 @@ class CaseSummary(ORM):
 
 class CaseDetail(CaseSummary):
     description: str
+    patient_email: str  # para las tareas de correo; `PatientRef` no lo trae en los listados
     created_by: AgentRef | None
     contact_reason: ReasonRef | None
     resolved_at: datetime | None
     closed_at: datetime | None
     events: list[CaseEventOut]
     notes: list[CaseNoteOut]
+    tasks: list[CaseTaskOut]
     next_stages: list[CaseStage]
     # Si el agente no puede abrir la conversación vinculada, no se ofrece el enlace.
     can_view_conversation: bool = False
+
+
+class MyTaskCase(ORM):
+    id: int
+    subject: str
+    patient: PatientRef
+
+
+class MyTask(CaseTaskOut):
+    case: MyTaskCase
 
 
 CaseStageFilter = Literal[

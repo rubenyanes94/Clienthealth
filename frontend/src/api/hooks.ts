@@ -6,6 +6,7 @@ import type {
   AgentPatch,
   CaseSearch,
   CaseStage,
+  CaseTaskType,
   InboxFilter,
   PatientIn,
   Priority,
@@ -186,6 +187,50 @@ export function useCaseActions(id: number) {
     note: useMutation({
       mutationFn: (body: string) =>
         unwrap(api.POST("/api/cases/{case_id}/notes", { ...path, body: { body } })),
+      onSettled: refresh,
+    }),
+  };
+}
+
+export function useMyTasks() {
+  return useQuery({
+    queryKey: ["my-tasks"],
+    queryFn: () => unwrap(api.GET("/api/cases/tasks/mine")),
+    refetchInterval: CASE_POLL_MS,
+    refetchIntervalInBackground: false,
+  });
+}
+
+export function useTaskActions(caseId: number) {
+  const queryClient = useQueryClient();
+  const refresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["case", caseId] });
+    await queryClient.invalidateQueries({ queryKey: ["my-tasks"] });
+  };
+  const taskPath = (taskId: number) => ({
+    params: { path: { case_id: caseId, task_id: taskId } },
+  });
+  return {
+    create: useMutation({
+      mutationFn: (body: {
+        type: CaseTaskType;
+        assigned_agent_id: number;
+        priority: Priority;
+        notes: string;
+      }) =>
+        unwrap(
+          api.POST("/api/cases/{case_id}/tasks", { params: { path: { case_id: caseId } }, body }),
+        ),
+      onSettled: refresh,
+    }),
+    complete: useMutation({
+      mutationFn: (taskId: number) =>
+        unwrap(api.POST("/api/cases/{case_id}/tasks/{task_id}/complete", taskPath(taskId))),
+      onSettled: refresh,
+    }),
+    cancel: useMutation({
+      mutationFn: (taskId: number) =>
+        unwrap(api.POST("/api/cases/{case_id}/tasks/{task_id}/cancel", taskPath(taskId))),
       onSettled: refresh,
     }),
   };

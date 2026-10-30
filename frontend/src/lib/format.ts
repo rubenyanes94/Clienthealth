@@ -55,6 +55,11 @@ export function displayPhone(waId: string): string {
   return m ? `+${m[1]} ${m[2]} ${m[3]} ${m[4]}` : `+${waId}`;
 }
 
+/** Teléfono de un paciente: 4141234567. Un número extranjero conserva su código de país. */
+export function patientPhone(phone: string): string {
+  return /^58\d{10}$/.test(phone) ? phone.slice(2) : `+${phone}`;
+}
+
 export const STATUS_LABEL: Record<ConversationStatus, string> = {
   bot: "En el bot",
   queued: "En cola",

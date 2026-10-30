@@ -7,8 +7,8 @@ from app.api.deps import current_agent
 from app.core.config import get_settings
 from app.db.base import utcnow
 from app.db.session import get_db
-from app.models import Agent, Case, CaseNote, Patient
-from app.models.enums import CaseStage, Priority
+from app.models import Agent, Case, CaseNote, CaseTask, Patient
+from app.models.enums import CaseStage, CaseTaskStatus, Priority
 from app.schemas.cases import (
     CaseDetail,
     CaseIn,
@@ -20,7 +20,10 @@ from app.schemas.cases import (
     CasesLive,
     CaseStageIn,
     CaseSummary,
+    CaseTaskIn,
+    CaseTaskOut,
     CaseTransferIn,
+    MyTask,
 )
 from app.services import cases as svc
 from app.services import conversations
@@ -32,7 +35,13 @@ PAGE_SIZE = 50
 
 def to_detail(db: Session, agent: Agent, case: Case) -> CaseDetail:
     db.refresh(case)
-    out = CaseDetail.model_validate({**_attrs(case), "next_stages": svc.NEXT_STAGES[case.stage]})
+    out = CaseDetail.model_validate(
+        {
+            **_attrs(case),
+            "next_stages": svc.NEXT_STAGES[case.stage],
+            "patient_email": case.patient.email,
+        }
+    )
     out.can_view_conversation = bool(
         case.conversation and conversations.can_view(agent, case.conversation)
     )
@@ -79,6 +88,13 @@ def search(
 @router.get("/live", response_model=CasesLive)
 def live(_: Agent = Depends(current_agent), db: Session = Depends(get_db)):
     return svc.live(db, utcnow())
+
+
+@router.get("/tasks/mine", response_model=list[MyTask])
+def my_tasks(
+    agent: Agent = Depends(current_agent), db: Session = Depends(get_db)
+) -> list[CaseTask]:
+    return svc.pending_tasks_of(db, agent)
 
 
 @router.post("", response_model=CaseDetail, status_code=status.HTTP_201_CREATED)
@@ -142,3 +158,33 @@ def add_note(
     db: Session = Depends(get_db),
 ) -> CaseNote:
     return svc.add_note(db, agent, case_id, body.body)
+
+
+@router.post("/{case_id}/tasks", response_model=CaseTaskOut, status_code=status.HTTP_201_CREATED)
+def create_task(
+    case_id: int,
+    body: CaseTaskIn,
+    agent: Agent = Depends(current_agent),
+    db: Session = Depends(get_db),
+) -> CaseTask:
+    return svc.create_task(db, agent, case_id, **body.model_dump())
+
+
+@router.post("/{case_id}/tasks/{task_id}/complete", response_model=CaseTaskOut)
+def complete_task(
+    case_id: int,
+    task_id: int,
+    agent: Agent = Depends(current_agent),
+    db: Session = Depends(get_db),
+) -> CaseTask:
+    return svc.finish_task(db, agent, case_id, task_id, CaseTaskStatus.DONE)
+
+
+@router.post("/{case_id}/tasks/{task_id}/cancel", response_model=CaseTaskOut)
+def cancel_task(
+    case_id: int,
+    task_id: int,
+    agent: Agent = Depends(current_agent),
+    db: Session = Depends(get_db),
+) -> CaseTask:
+    return svc.finish_task(db, agent, case_id, task_id, CaseTaskStatus.CANCELLED)

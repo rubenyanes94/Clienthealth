@@ -11,6 +11,16 @@ export const EMPTY_PATIENT: PatientForm = {
   email: "",
 };
 
+/** 4141234567, también con 0 o +58 delante; o un número extranjero con su código de país. */
+function isValidPhone(phone: string): boolean {
+  const digits = phone.replace(/\D/g, "");
+  return (
+    /^0?[1-9]\d{9}$/.test(digits) ||
+    /^58[1-9]\d{9}$/.test(digits) ||
+    (/^[1-9]\d{10,14}$/.test(digits) && !digits.startsWith("58"))
+  );
+}
+
 /** El backend vuelve a validar y normaliza: aquí solo se avisa antes de enviar. */
 export function validatePatient(form: PatientForm): PatientErrors {
   const errors: PatientErrors = {};
@@ -21,7 +31,7 @@ export function validatePatient(form: PatientForm): PatientErrors {
   else if (form.national_id.replace(/[\s.-]/g, "").length < 5)
     errors.national_id = "Cédula no válida";
   if (!form.phone.trim()) errors.phone = required;
-  else if (form.phone.replace(/\D/g, "").length < 8) errors.phone = "Teléfono no válido";
+  else if (!isValidPhone(form.phone)) errors.phone = "Escríbalo así: 4141234567";
   if (!form.email.trim()) errors.email = required;
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errors.email = "Correo no válido";
   return errors;

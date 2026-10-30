@@ -5,14 +5,23 @@ from statistics import median
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from sqlalchemy import case as sql_case
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.elements import ColumnElement
 
 from app.core.config import get_settings
 from app.db.base import utcnow
-from app.models import Agent, Area, Case, CaseEvent, CaseNote, ContactReason, Patient
-from app.models.enums import CaseEventType, CaseStage, EventType, PatientEventType, Priority
+from app.models import Agent, Area, Case, CaseEvent, CaseNote, CaseTask, ContactReason, Patient
+from app.models.enums import (
+    CaseEventType,
+    CaseStage,
+    CaseTaskStatus,
+    CaseTaskType,
+    EventType,
+    PatientEventType,
+    Priority,
+)
 from app.services import conversations, events, patients
 from app.services.conversations import ConflictError, ConversationError, NotFoundError
 
@@ -132,6 +141,9 @@ def change_stage(
 
     now = utcnow()
     if stage == CaseStage.CLOSED:
+        # Cerrar con una llamada pendiente dejaría al paciente esperando un contacto que nadie hará.
+        if any(t.status == CaseTaskStatus.PENDING for t in case.tasks):
+            raise ConflictError("Complete o cancele las tareas pendientes antes de cerrar")
         _set_close_reason(db, case, contact_reason_id)
         case.closed_at = now
     if stage == CaseStage.RESOLVED:
@@ -209,6 +221,85 @@ def add_note(db: Session, agent: Agent, case_id: int, body: str) -> CaseNote:
     events.record_case(db, case, CaseEventType.NOTE_ADDED, agent=agent, data={"note_id": note.id})
     db.commit()
     return note
+
+
+# --- Tareas ----------------------------------------------------------------------------------
+
+
+def create_task(
+    db: Session,
+    agent: Agent,
+    case_id: int,
+    *,
+    type: CaseTaskType,
+    assigned_agent_id: int,
+    priority: Priority,
+    notes: str,
+) -> CaseTask:
+    case = _lock(db, case_id)
+    if case.stage == CaseStage.CLOSED:
+        raise ConflictError("Reabra el caso para crearle tareas")
+    assignee = db.get(Agent, assigned_agent_id)
+    if assignee is None or not assignee.is_active:
+        raise ConversationError("Usuario no válido")
+    task = CaseTask(
+        case_id=case.id,
+        type=type,
+        assigned_agent_id=assignee.id,
+        created_by_agent_id=agent.id,
+        priority=priority,
+        notes=notes.strip(),
+    )
+    db.add(task)
+    db.flush()
+    events.record_case(
+        db,
+        case,
+        CaseEventType.TASK_CREATED,
+        agent=agent,
+        data={"task_id": task.id, "task_type": type.value, "assigned_agent_id": assignee.id},
+    )
+    db.commit()
+    return task
+
+
+def finish_task(
+    db: Session, agent: Agent, case_id: int, task_id: int, status: CaseTaskStatus
+) -> CaseTask:
+    case = _lock(db, case_id)
+    task = db.get(CaseTask, task_id)
+    if task is None or task.case_id != case.id:
+        raise NotFoundError("Tarea no encontrada")
+    if task.status != CaseTaskStatus.PENDING:
+        raise ConflictError("La tarea ya no está pendiente")
+    task.status = status
+    task.finished_by_agent_id = agent.id
+    task.finished_at = utcnow()
+    done = status == CaseTaskStatus.DONE
+    events.record_case(
+        db,
+        case,
+        CaseEventType.TASK_COMPLETED if done else CaseEventType.TASK_CANCELLED,
+        agent=agent,
+        data={"task_id": task.id, "task_type": task.type.value},
+    )
+    db.commit()
+    return task
+
+
+def pending_tasks_of(db: Session, agent: Agent) -> list[CaseTask]:
+    """Urgentes primero; después, las más antiguas."""
+    urgent_first = sql_case((CaseTask.priority == Priority.HIGH, 0), else_=1)
+    return list(
+        db.scalars(
+            select(CaseTask)
+            .where(
+                CaseTask.assigned_agent_id == agent.id,
+                CaseTask.status == CaseTaskStatus.PENDING,
+            )
+            .order_by(urgent_first, CaseTask.id)
+        )
+    )
 
 
 # --- Listado ---------------------------------------------------------------------------------

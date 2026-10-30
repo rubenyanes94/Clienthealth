@@ -175,6 +175,7 @@ transacción. Sin evento, la acción no cuenta en los indicadores.
 | `POST /patients/search` · `POST /patients` · `GET/PATCH /patients/{id}` | Fichas de pacientes (cualquier agente) |
 | `POST /cases/search` · `POST /cases` · `GET/PATCH /cases/{id}` | Casos. `conversation_id` opcional para crearlo desde un chat |
 | `POST /cases/{id}/stage` · `/transfer` · `/take` · `/notes` | Mover de etapa (el motivo es obligatorio al cerrar), cambiar de área, tomar y anotar |
+| `POST /cases/{id}/tasks` · `/tasks/{id}/complete` · `/tasks/{id}/cancel` · `GET /cases/tasks/mine` | Tareas del caso y las pendientes de quien tiene la sesión |
 | `GET /cases/live` | Situación de la sala: conteos y tiempos, sin datos de pacientes |
 | `PUT /contacts/{id}/consent` | Registrar o retirar el consentimiento para mensajes proactivos (NPS) |
 | `GET /metrics/overview?from=&to=&area_id=` · `/by-hour` · `/by-agent` · `/by-area` · `/reasons` · `/csat-daily` | Paneles (supervisor). Definiciones en `docs/METRICAS.md` |
@@ -552,8 +553,8 @@ Diferencias con la versión original de este documento y su motivo:
    «Casos» listaba conversaciones: ahora es este módulo, y el registro de eventos de cada chat pasó a
    `/conversaciones/:id/registro`.
 2. **Pacientes** (`patients`): nombre, apellido, cédula, teléfono y correo, todos obligatorios por
-   decisión del centro. La cédula es única y se guarda sin puntos ni guiones (`V12345678`). El
-   teléfono se guarda como `wa_id` (`0414…` → `58414…`) para encontrar al paciente desde su chat.
+   decisión del centro. La cédula es única y se guarda sin puntos ni guiones (`V12345678`). El teléfono se escribe y se muestra
+   como `4141234567`, y se guarda como `wa_id` (`584141234567`) para encontrar al paciente desde su chat.
    Reemplaza a la pantalla `/contactos` prevista para la fase 4.
 3. **Etapas** (`NEXT_STAGES` en `services/cases.py`): Registrado → En atención → En espera ↔ En
    atención → Resuelto → Cerrado. Resuelto puede volver a atención y Cerrado se reabre en atención.
@@ -574,3 +575,8 @@ Diferencias con la versión original de este documento y su motivo:
    queda solo para el SLA de WhatsApp.
 10. **Historial**: `patient_events` registra quién creó, editó o vinculó cada ficha, con los nombres
     de los campos y nunca sus valores.
+11. **Tareas** (`case_tasks`): contactos con el paciente asignados a una persona, de cualquier área.
+    Solo hay tres tipos: Llamar, WhatsApp y Correo. Son recordatorios: completar una tarea **no** envía
+    nada al paciente. Quien la completa o cancela queda registrado aunque no sea a quien se le asignó.
+    Un caso no se puede cerrar con tareas pendientes. `/catalog` incluye los usuarios activos para
+    poder asignarlas. Sus indicaciones viven en la tarea y nunca en `CaseEvent.data`.

@@ -96,3 +96,18 @@ class CaseEventType(StrEnum):
     TAKEN = "taken"
     UPDATED = "updated"
     NOTE_ADDED = "note_added"
+    TASK_CREATED = "task_created"
+    TASK_COMPLETED = "task_completed"
+    TASK_CANCELLED = "task_cancelled"
+
+
+class CaseTaskType(StrEnum):
+    CALL = "call"
+    WHATSAPP = "whatsapp"
+    EMAIL = "email"
+
+
+class CaseTaskStatus(StrEnum):
+    PENDING = "pending"
+    DONE = "done"
+    CANCELLED = "cancelled"

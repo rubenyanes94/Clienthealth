@@ -1,4 +1,4 @@
-import { displayPhone, formatElapsed, formatListTime } from "./format";
+import { displayPhone, formatElapsed, formatListTime, patientPhone } from "./format";
 
 describe("format", () => {
   it("formatea teléfonos venezolanos", () => {
@@ -19,5 +19,15 @@ describe("format", () => {
     // 03:00 UTC del 21 = 23:00 del 20 en Caracas
     const now = new Date("2026-10-21T03:30:00Z");
     expect(formatListTime("2026-10-21T03:00:00Z", now)).toMatch(/11:00/);
+  });
+});
+
+describe("patientPhone", () => {
+  it("muestra el número venezolano sin código de país", () => {
+    expect(patientPhone("584141234567")).toBe("4141234567");
+  });
+
+  it("conserva el código de un número extranjero", () => {
+    expect(patientPhone("573001234567")).toBe("+573001234567");
   });
 });

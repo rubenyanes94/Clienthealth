@@ -6,7 +6,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { fieldClass } from "@/components/ui/Sheet";
-import { displayPhone } from "@/lib/format";
+import { patientPhone } from "@/lib/format";
 import { useDebounced } from "@/lib/useDebounced";
 import { PatientDialog } from "./PatientDialog";
 
@@ -75,7 +75,7 @@ export function PatientsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-ink-2 tabular-nums">{p.national_id}</td>
-                  <td className="px-6 py-4 text-ink-2 tabular-nums">{displayPhone(p.phone)}</td>
+                  <td className="px-6 py-4 text-ink-2 tabular-nums">{patientPhone(p.phone)}</td>
                   <td className="px-6 py-4 text-ink-2">{p.email}</td>
                   <td className="pr-5">
                     <span className="flex size-8 items-center justify-center rounded-full bg-surface-3 text-ink-3 transition group-hover:bg-ink group-hover:text-white">

@@ -87,6 +87,7 @@ export function CloseCaseDialog({ item, open, onClose }: DialogProps) {
   const [reasonId, setReasonId] = useState<number | "">(item.contact_reason?.id ?? "");
   const reasons =
     catalog.data?.reasons.filter((r) => r.area_id === null || r.area_id === item.area.id) ?? [];
+  const pendingTasks = item.tasks.filter((t) => t.status === "pending").length;
 
   return (
     <Sheet
@@ -110,10 +111,15 @@ export function CloseCaseDialog({ item, open, onClose }: DialogProps) {
           ))}
         </select>
       </Field>
+      {pendingTasks > 0 && (
+        <p role="alert" className="mt-4 rounded-2xl bg-warn-soft px-4 py-3 text-sm text-warn">
+          Complete o cancele las tareas pendientes antes de cerrar ({pendingTasks}).
+        </p>
+      )}
       <Footer
         onClose={onClose}
         label="Cerrar caso"
-        disabled={!reasonId || stage.isPending}
+        disabled={!reasonId || stage.isPending || pendingTasks > 0}
         onConfirm={() =>
           reasonId &&
           stage.mutate(

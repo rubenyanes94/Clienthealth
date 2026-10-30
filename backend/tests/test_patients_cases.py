@@ -334,3 +334,114 @@ def test_goal_is_the_same_for_all_areas(lab_agent, db):
     assert live["late"] == 0
     page = lab_agent.post("/api/cases/search", json={}).json()
     assert page["goal_minutes"] == 15
+
+
+def new_task(client, case_id, assignee_id, **overrides):
+    body = {"type": "call", "assigned_agent_id": assignee_id, **overrides}
+    return client.post(f"/api/cases/{case_id}/tasks", json=body)
+
+
+def test_task_lifecycle_across_areas(lab_agent, db):
+    luis_id = make_agent(db, "luis@cm.test", area_slug="seguros-facturacion").id
+    luis = login("luis@cm.test")
+    case = new_case(lab_agent, db, new_patient(lab_agent)["id"])
+    cid = case["id"]
+
+    assert luis_id in [a["id"] for a in lab_agent.get("/api/catalog").json()["agents"]]
+    created = new_task(lab_agent, cid, luis_id, priority="high", notes="Avisar del resultado")
+    assert created.status_code == 201
+    task = created.json()
+    assert task["status"] == "pending"
+    assert task["assigned_agent"]["name"] == "Luis"
+    assert task["created_by"]["name"] == "Lab"
+
+    mine = luis.get("/api/cases/tasks/mine").json()
+    assert [t["id"] for t in mine] == [task["id"]]
+    assert mine[0]["case"]["patient"]["national_id"] == "V12345678"
+    assert lab_agent.get("/api/cases/tasks/mine").json() == []
+
+    done = luis.post(f"/api/cases/{cid}/tasks/{task['id']}/complete").json()
+    assert done["status"] == "done"
+    assert done["finished_by"]["name"] == "Luis"
+    assert done["finished_at"] is not None
+    assert luis.get("/api/cases/tasks/mine").json() == []
+    assert luis.post(f"/api/cases/{cid}/tasks/{task['id']}/cancel").status_code == 409
+
+    detail = lab_agent.get(f"/api/cases/{cid}").json()
+    assert detail["patient_email"] == "maria@example.com"
+    assert [t["id"] for t in detail["tasks"]] == [task["id"]]
+    assert [(e["type"], e["agent"]["name"]) for e in detail["events"][-2:]] == [
+        ("task_created", "Lab"),
+        ("task_completed", "Luis"),
+    ]
+
+
+def test_task_only_allows_the_three_types(lab_agent, db):
+    me = lab_agent.get("/api/auth/me").json()["id"]
+    cid = new_case(lab_agent, db, new_patient(lab_agent)["id"])["id"]
+    for kind in ("call", "whatsapp", "email"):
+        assert new_task(lab_agent, cid, me, type=kind).status_code == 201
+    assert new_task(lab_agent, cid, me, type="visita").status_code == 422
+    assert lab_agent.post(f"/api/cases/{cid}/tasks", json={"type": "call"}).status_code == 422
+
+
+def test_task_rejects_inactive_user_and_foreign_case(lab_agent, db):
+    inactive = make_agent(db, "baja@cm.test")
+    inactive.is_active = False
+    db.commit()
+    patient = new_patient(lab_agent)
+    first = new_case(lab_agent, db, patient["id"])
+    second = new_case(lab_agent, db, patient["id"])
+    assert new_task(lab_agent, first["id"], inactive.id).status_code == 400
+    me = lab_agent.get("/api/auth/me").json()["id"]
+    task = new_task(lab_agent, first["id"], me).json()
+    wrong = lab_agent.post(f"/api/cases/{second['id']}/tasks/{task['id']}/complete")
+    assert wrong.status_code == 404
+
+
+def test_pending_tasks_block_closing_but_not_resolving(lab_agent, db):
+    me = lab_agent.get("/api/auth/me").json()["id"]
+    cid = new_case(lab_agent, db, new_patient(lab_agent)["id"])["id"]
+    to_stage(lab_agent, cid, "in_progress")
+    task = new_task(lab_agent, cid, me).json()
+    assert to_stage(lab_agent, cid, "resolved").status_code == 200
+
+    reason = {"contact_reason_id": reason_id(db)}
+    assert to_stage(lab_agent, cid, "closed", **reason).status_code == 409
+    lab_agent.post(f"/api/cases/{cid}/tasks/{task['id']}/cancel")
+    assert to_stage(lab_agent, cid, "closed", **reason).status_code == 200
+    assert new_task(lab_agent, cid, me).status_code == 409  # caso cerrado
+
+
+def test_task_notes_are_not_copied_to_events(lab_agent, db):
+    me = lab_agent.get("/api/auth/me").json()["id"]
+    cid = new_case(lab_agent, db, new_patient(lab_agent)["id"])["id"]
+    new_task(lab_agent, cid, me, notes="Tiene diabetes")
+    for event in db.scalars(select(CaseEvent).where(CaseEvent.case_id == cid)):
+        assert "diabetes" not in str(event.data)
+
+
+def test_my_tasks_urgent_first(lab_agent, db):
+    me = lab_agent.get("/api/auth/me").json()["id"]
+    cid = new_case(lab_agent, db, new_patient(lab_agent)["id"])["id"]
+    normal = new_task(lab_agent, cid, me).json()
+    urgent = new_task(lab_agent, cid, me, priority="high", type="email").json()
+    assert [t["id"] for t in lab_agent.get("/api/cases/tasks/mine").json()] == [
+        urgent["id"],
+        normal["id"],
+    ]
+
+
+def test_phone_format(lab_agent):
+    for i, written in enumerate(["4141234567", "0414-1234567", "+58 414 123 4567", "584141234567"]):
+        patient = new_patient(lab_agent, phone=written, national_id=f"V90000{i}")
+        assert patient["phone"] == "584141234567", written
+    foreign = new_patient(lab_agent, phone="+57 300 123 4567", national_id="E900009")
+    assert foreign["phone"] == "573001234567"
+    for wrong in ["0414567890", "414123456", "123", "58414123456", "00414123456"]:
+        response = lab_agent.post(
+            "/api/patients", json={**PATIENT, "phone": wrong, "national_id": "V800000"}
+        )
+        assert response.status_code == 422, wrong
+    found = lab_agent.post("/api/patients/search", json={"q": "4141234567"}).json()
+    assert len(found["items"]) == 4
