@@ -4,9 +4,11 @@ import { LoginPage } from "./features/auth/LoginPage";
 import { RequireAuth } from "./features/auth/RequireAuth";
 import { CaseDetailPage } from "./features/cases/CaseDetailPage";
 import { CasesPage } from "./features/cases/CasesPage";
+import { ConversationLogPage } from "./features/inbox/ConversationLogPage";
 import { InboxPage } from "./features/inbox/InboxPage";
+import { PatientDetailPage } from "./features/patients/PatientDetailPage";
+import { PatientsPage } from "./features/patients/PatientsPage";
 import { LazyPanelsPage, LazyReportsPage } from "./features/metrics/lazy";
-import { Placeholder } from "./features/metrics/Placeholder";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -17,9 +19,10 @@ export const router = createBrowserRouter([
       </RequireAuth>
     ),
     children: [
-      { index: true, element: <Navigate to="/conversaciones" replace /> },
+      { index: true, element: <Navigate to="/casos" replace /> },
       { path: "conversaciones", element: <InboxPage /> },
       { path: "conversaciones/:id", element: <InboxPage /> },
+      { path: "conversaciones/:id/registro", element: <ConversationLogPage /> },
       { path: "casos", element: <CasesPage /> },
       { path: "casos/:id", element: <CaseDetailPage /> },
       {
@@ -30,8 +33,10 @@ export const router = createBrowserRouter([
         path: "informes",
         element: <LazyReportsPage />,
       },
-      { path: "contactos", element: <Placeholder title="Contactos" phase="fase 4" /> },
-      { path: "*", element: <Navigate to="/conversaciones" replace /> },
+      { path: "pacientes", element: <PatientsPage /> },
+      { path: "pacientes/:id", element: <PatientDetailPage /> },
+      { path: "contactos", element: <Navigate to="/pacientes" replace /> },
+      { path: "*", element: <Navigate to="/casos" replace /> },
     ],
   },
 ]);

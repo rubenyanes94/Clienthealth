@@ -21,6 +21,8 @@ function conversation(overrides: Partial<ConversationDetail> = {}): Conversation
     messages: [],
     events: [],
     surveys: [],
+    patient: null,
+    cases: [],
     ...overrides,
   };
 }

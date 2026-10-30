@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
 import { api, unwrap } from "./client";
-import type { InboxFilter } from "./types";
+import type { CaseSearch, CaseStage, InboxFilter, PatientIn, Priority } from "./types";
 
 export const keys = {
   me: ["me"] as const,
@@ -87,6 +87,133 @@ export function useInboxChanges(enabled: boolean) {
         }
       }
       return result;
+    },
+  });
+}
+
+const CASE_POLL_MS = 5_000;
+
+export function useCases(search: CaseSearch) {
+  return useQuery({
+    queryKey: ["cases", search],
+    queryFn: () => unwrap(api.POST("/api/cases/search", { body: search })),
+    placeholderData: keepPreviousData,
+    refetchInterval: CASE_POLL_MS,
+    refetchIntervalInBackground: false,
+  });
+}
+
+/** Situación de la sala. Sin datos de pacientes: solo conteos y tiempos. */
+export function useCasesLive() {
+  return useQuery({
+    queryKey: ["cases-live"],
+    queryFn: () => unwrap(api.GET("/api/cases/live")),
+    refetchInterval: CASE_POLL_MS,
+    refetchIntervalInBackground: false,
+  });
+}
+
+export function useCase(id: number) {
+  return useQuery({
+    queryKey: ["case", id],
+    queryFn: () => unwrap(api.GET("/api/cases/{case_id}", { params: { path: { case_id: id } } })),
+    refetchInterval: CASE_POLL_MS,
+    refetchIntervalInBackground: false,
+  });
+}
+
+export function useCreateCase() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: {
+      patient_id: number;
+      area_id: number;
+      subject: string;
+      description: string;
+      priority: Priority;
+      conversation_id: number | null;
+    }) => unwrap(api.POST("/api/cases", { body })),
+    onSuccess: async (created) => {
+      await queryClient.invalidateQueries({ queryKey: ["cases"] });
+      await queryClient.invalidateQueries({ queryKey: ["cases-live"] });
+      await queryClient.invalidateQueries({ queryKey: ["patient", created.patient.id] });
+      if (created.conversation_id !== null) {
+        await queryClient.invalidateQueries({
+          queryKey: keys.conversation(created.conversation_id),
+        });
+      }
+    },
+  });
+}
+
+export function useCaseActions(id: number) {
+  const queryClient = useQueryClient();
+  const refresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["case", id] });
+    await queryClient.invalidateQueries({ queryKey: ["cases"] });
+    await queryClient.invalidateQueries({ queryKey: ["cases-live"] });
+  };
+  const path = { params: { path: { case_id: id } } };
+  return {
+    stage: useMutation({
+      mutationFn: (body: { stage: CaseStage; contact_reason_id?: number }) =>
+        unwrap(api.POST("/api/cases/{case_id}/stage", { ...path, body })),
+      // También si falla: lo normal es que otra tableta se haya adelantado.
+      onSettled: refresh,
+    }),
+    transfer: useMutation({
+      mutationFn: (area_id: number) =>
+        unwrap(api.POST("/api/cases/{case_id}/transfer", { ...path, body: { area_id } })),
+      onSettled: refresh,
+    }),
+    take: useMutation({
+      mutationFn: () => unwrap(api.POST("/api/cases/{case_id}/take", path)),
+      onSettled: refresh,
+    }),
+    update: useMutation({
+      mutationFn: (body: { subject: string; description: string; priority: Priority }) =>
+        unwrap(api.PATCH("/api/cases/{case_id}", { ...path, body })),
+      onSettled: refresh,
+    }),
+    note: useMutation({
+      mutationFn: (body: string) =>
+        unwrap(api.POST("/api/cases/{case_id}/notes", { ...path, body: { body } })),
+      onSettled: refresh,
+    }),
+  };
+}
+
+export function usePatientSearch(q: string) {
+  return useQuery({
+    queryKey: ["patients", q],
+    queryFn: () => unwrap(api.POST("/api/patients/search", { body: { q } })),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function usePatient(id: number) {
+  return useQuery({
+    queryKey: ["patient", id],
+    queryFn: () =>
+      unwrap(api.GET("/api/patients/{patient_id}", { params: { path: { patient_id: id } } })),
+  });
+}
+
+export function useSavePatient(id?: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: PatientIn) =>
+      id === undefined
+        ? unwrap(api.POST("/api/patients", { body }))
+        : unwrap(
+            api.PATCH("/api/patients/{patient_id}", {
+              params: { path: { patient_id: id } },
+              body,
+            }),
+          ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["patients"] });
+      await queryClient.invalidateQueries({ queryKey: ["patient"] });
     },
   });
 }

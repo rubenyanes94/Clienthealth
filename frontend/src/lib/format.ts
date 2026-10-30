@@ -81,4 +81,5 @@ export const EVENT_LABEL: Record<EventType, string> = {
   abandoned: "Marcada como abandonada",
   survey_sent: "Encuesta enviada",
   survey_answered: "Encuesta respondida",
+  case_created: "Caso creado desde el chat",
 };

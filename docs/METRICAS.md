@@ -7,7 +7,8 @@ y la prueba.
 
 ## Principios
 
-- **Fuente única**: todo se calcula desde `conversation_events` (y `surveys` para las encuestas).
+- **Fuente única**: todo se calcula desde `conversation_events` (y `surveys` para las encuestas), y
+  los indicadores de la sala desde `case_events`.
   Si una acción no registró su evento, no existe para los indicadores.
 - **Minutos hábiles**: los tiempos se miden en minutos dentro del horario hábil del área
   (tabla `business_hours`), sin contar feriados (`holidays`), en hora de Caracas. Un área sin
@@ -114,3 +115,20 @@ Los indicadores se calculan al vuelo cargando los eventos de las conversaciones 
 período. Es suficiente para el volumen esperado (miles de conversaciones al mes). Si los paneles se
 vuelven lentos, `daily-rollup` puede guardar contadores diarios por área (numeradores y
 denominadores, no porcentajes) sin cambiar estas definiciones.
+
+## Sala en tiempo real (módulo de Casos)
+
+Implementación en `backend/app/services/cases.py` (`live`) y pruebas en
+`backend/tests/test_patients_cases.py`. A diferencia del resto de este documento, se miden en
+**minutos de reloj**: quien espera en la sala espera igual fuera del horario hábil. «Hoy» es el día
+local de Caracas.
+
+| Indicador | Definición |
+|---|---|
+| Registrado, En atención, En espera, Resuelto | Casos que están ahora en esa etapa, en total y por área |
+| Urgentes | Casos no cerrados con prioridad alta |
+| Espera más larga | Tiempo desde `stage_changed_at` del caso *Registrado* más antiguo. Transferir reinicia el conteo |
+| Fuera de meta | Casos *Registrados* que llevan en su área al menos `sla_first_response_minutes` |
+| Creados hoy / Cerrados hoy | Casos con `opened_at` / `closed_at` en el día |
+| 1ª atención (mediana) | Casos abiertos hoy: desde la apertura hasta su primer `STAGE_CHANGED` a `in_progress`. Los aún no atendidos no cuentan |
+| Resolución (mediana) | Casos con `resolved_at` hoy: desde la apertura hasta `resolved_at`, descontando el tiempo en *En espera*. Si se reabrió, el tiempo entre medias cuenta |

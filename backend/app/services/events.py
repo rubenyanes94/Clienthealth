@@ -3,8 +3,8 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.db.base import utcnow
-from app.models import Agent, Conversation, ConversationEvent
-from app.models.enums import EventType
+from app.models import Agent, Case, CaseEvent, Conversation, ConversationEvent
+from app.models.enums import CaseEventType, EventType
 
 
 def record(
@@ -30,4 +30,27 @@ def record(
     )
     db.add(event)
     conversation.updated_at = now
+    return event
+
+
+def record_case(
+    db: Session,
+    case: Case,
+    type: CaseEventType,
+    *,
+    agent: Agent | None = None,
+    data: dict[str, Any] | None = None,
+) -> CaseEvent:
+    """Igual que `record`, para los casos. `data` tampoco admite texto del paciente."""
+    now = utcnow()
+    event = CaseEvent(
+        case_id=case.id,
+        type=type,
+        agent_id=agent.id if agent else None,
+        area_id=case.area_id,
+        data=data or {},
+        created_at=now,
+    )
+    db.add(event)
+    case.updated_at = now
     return event

@@ -9,15 +9,15 @@ import {
   Users,
 } from "lucide-react";
 import { NavLink, Outlet } from "react-router";
-import { useInboxChanges, useLiveMetrics, useLogout, useMe } from "@/api/hooks";
+import { useCasesLive, useInboxChanges, useLiveMetrics, useLogout, useMe } from "@/api/hooks";
 import { Avatar } from "@/components/ui/Avatar";
 
 const NAV = [
-  { to: "/conversaciones", label: "Conversaciones", icon: MessagesSquare, supervisor: false },
   { to: "/casos", label: "Casos", icon: ClipboardList, supervisor: false },
+  { to: "/conversaciones", label: "Conversaciones", icon: MessagesSquare, supervisor: false },
+  { to: "/pacientes", label: "Pacientes", icon: Users, supervisor: false },
   { to: "/paneles", label: "Paneles", icon: BarChart3, supervisor: true },
   { to: "/informes", label: "Informes", icon: FileText, supervisor: true },
-  { to: "/contactos", label: "Contactos", icon: Users, supervisor: false },
 ];
 
 const ROLE_LABEL: Record<string, string> = {
@@ -33,6 +33,7 @@ const ROLE_LABEL: Record<string, string> = {
 export function AppShell() {
   const me = useMe();
   const live = useLiveMetrics();
+  const room = useCasesLive();
   const logout = useLogout();
   useInboxChanges(Boolean(me.data));
 
@@ -67,6 +68,17 @@ export function AppShell() {
                         )}
                       >
                         <Icon className="size-5" aria-hidden />
+                        {to === "/casos" && room.data && room.data.registered > 0 && (
+                          <span
+                            title="Casos por atender"
+                            className={clsx(
+                              "absolute -top-0.5 -right-0.5 min-w-5 rounded-full px-1 text-center text-[11px] leading-5 font-semibold tabular-nums ring-2 ring-ink",
+                              room.data.late > 0 ? "bg-danger text-white" : "bg-white text-ink",
+                            )}
+                          >
+                            {room.data.registered}
+                          </span>
+                        )}
                         {to === "/conversaciones" && live.data && live.data.queued > 0 && (
                           <span
                             title="Casos en cola"

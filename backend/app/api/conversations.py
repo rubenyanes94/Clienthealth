@@ -1,11 +1,20 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import current_agent
 from app.db.session import get_db
-from app.models import Agent, Conversation
+from app.models import Agent, Case, Conversation, Patient
 from app.models.enums import ConversationStatus
-from app.schemas import CloseIn, ConversationDetail, MessageIn, MessageOut, TransferIn
+from app.schemas import (
+    CaseBrief,
+    CloseIn,
+    ConversationDetail,
+    MessageIn,
+    MessageOut,
+    PatientRef,
+    TransferIn,
+)
 from app.services import conversations as svc
 from app.services import surveys
 
@@ -22,6 +31,12 @@ def to_detail(db: Session, conversation: Conversation) -> ConversationDetail:
     if conversation.status != ConversationStatus.CLOSED:
         # Para que el diálogo de cierre diga de antemano si saldrá la encuesta.
         out.csat_skip_reason = surveys.csat_skip_reason(db, conversation)
+    patient = db.scalar(select(Patient).where(Patient.contact_id == conversation.contact_id))
+    out.patient = PatientRef.model_validate(patient) if patient else None
+    linked = db.scalars(
+        select(Case).where(Case.conversation_id == conversation.id).order_by(Case.id.desc())
+    )
+    out.cases = [CaseBrief.model_validate(c) for c in linked]
     return out
 
 
