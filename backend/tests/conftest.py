@@ -3,6 +3,7 @@ import hashlib
 import hmac
 import json
 import os
+from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
@@ -21,7 +22,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy import select, text  # noqa: E402
 
 from app.core.security import hash_password  # noqa: E402
-from app.db.base import Base  # noqa: E402
+from app.db.base import Base, utcnow  # noqa: E402
 from app.db.session import get_engine, get_sessionmaker  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import Agent, Area, ContactReason  # noqa: E402
@@ -70,6 +71,7 @@ def make_agent(db, email: str, role: AgentRole = AgentRole.AGENT, area_slug: str
         name=email.split("@")[0].title(),
         email=email,
         password_hash=hash_password(PASSWORD),
+        password_set_at=utcnow() - timedelta(minutes=1),
         role=role,
         area_id=area_id(db, area_slug) if area_slug else None,
     )

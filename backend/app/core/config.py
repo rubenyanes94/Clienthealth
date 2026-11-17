@@ -50,6 +50,18 @@ class Settings(BaseSettings):
 
     cron_secret: str = ""
     timezone: str = "America/Caracas"
+
+    # Correo (invitaciones y restablecer contraseña). Sin SMTP_HOST no se envía nada: en pruebas el
+    # administrador ve el enlace para compartirlo; en producción el envío falla con un aviso claro.
+    app_base_url: str = "http://localhost:5173"  # dirección pública de la web, para los enlaces
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_starttls: bool = True
+    email_from: str = "Atención al Paciente <no-responder@localhost>"
+    invite_expire_hours: int = 72
+    reset_expire_minutes: int = 60
     # Meta del módulo de Casos, igual para todas las áreas: minutos hasta empezar a atender.
     case_goal_minutes: int = 15
 

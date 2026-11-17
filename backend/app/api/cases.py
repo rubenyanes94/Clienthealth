@@ -3,14 +3,16 @@ from sqlalchemy import case as sql_case
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.api.deps import current_agent
+from app.api.deps import require_permission
 from app.core.config import get_settings
+from app.core.permissions import Permission
 from app.db.base import utcnow
 from app.db.session import get_db
 from app.models import Agent, Case, CaseNote, CaseTask, Patient
 from app.models.enums import CaseStage, CaseTaskStatus, Priority
 from app.schemas.cases import (
     CaseAssignIn,
+    CaseConversation,
     CaseDetail,
     CaseIn,
     CaseNoteIn,
@@ -28,6 +30,7 @@ from app.schemas.cases import (
 )
 from app.services import cases as svc
 from app.services import conversations
+from app.services.conversations import ConversationError
 
 router = APIRouter(prefix="/cases", tags=["cases"])
 
@@ -55,7 +58,9 @@ def _attrs(case: Case) -> dict:
 
 @router.post("/search", response_model=CasePage)
 def search(
-    body: CaseSearchIn, agent: Agent = Depends(current_agent), db: Session = Depends(get_db)
+    body: CaseSearchIn,
+    agent: Agent = Depends(require_permission(Permission.CASES_HISTORY)),
+    db: Session = Depends(get_db),
 ) -> CasePage:
     offset = int(body.cursor) if body.cursor and body.cursor.isdigit() else 0
     filters = svc.search_filters(
@@ -87,36 +92,67 @@ def search(
 
 
 @router.get("/live", response_model=CasesLive)
-def live(_: Agent = Depends(current_agent), db: Session = Depends(get_db)):
+def live(
+    _: Agent = Depends(require_permission(Permission.CASES_HISTORY)), db: Session = Depends(get_db)
+):
     return svc.live(db, utcnow())
 
 
 @router.get("/tasks/mine", response_model=list[MyTask])
 def my_tasks(
-    agent: Agent = Depends(current_agent), db: Session = Depends(get_db)
+    agent: Agent = Depends(require_permission(Permission.TASKS_ASSIGN)),
+    db: Session = Depends(get_db),
 ) -> list[CaseTask]:
     return svc.pending_tasks_of(db, agent)
 
 
 @router.post("", response_model=CaseDetail, status_code=status.HTTP_201_CREATED)
 def create(
-    body: CaseIn, agent: Agent = Depends(current_agent), db: Session = Depends(get_db)
+    body: CaseIn,
+    agent: Agent = Depends(require_permission(Permission.CASES_MANAGE)),
+    db: Session = Depends(get_db),
 ) -> CaseDetail:
     return to_detail(db, agent, svc.create(db, agent, **body.model_dump()))
 
 
 @router.get("/{case_id}", response_model=CaseDetail)
 def get_case(
-    case_id: int, agent: Agent = Depends(current_agent), db: Session = Depends(get_db)
+    case_id: int,
+    agent: Agent = Depends(require_permission(Permission.CASES_HISTORY)),
+    db: Session = Depends(get_db),
 ) -> CaseDetail:
     return to_detail(db, agent, svc.get(db, case_id))
+
+
+@router.get("/{case_id}/conversation", response_model=CaseConversation)
+def case_conversation(
+    case_id: int,
+    _: Agent = Depends(require_permission(Permission.CASES_HISTORY)),
+    db: Session = Depends(get_db),
+) -> CaseConversation:
+    """Quien puede ver el caso puede leer el chat del que nació, aunque sea de otra área.
+
+    Es solo lectura: responder, anotar o cambiar el chat sigue las reglas de Conversaciones.
+    """
+    conversation = svc.get(db, case_id).conversation
+    if conversation is None:
+        raise ConversationError("Este caso no nació de una conversación")
+    return CaseConversation(
+        id=conversation.id,
+        status=conversation.status,
+        area=conversation.area,
+        contact_name=conversation.contact.name,
+        opened_at=conversation.opened_at,
+        closed_at=conversation.closed_at,
+        messages=conversation.messages,
+    )
 
 
 @router.patch("/{case_id}", response_model=CaseDetail)
 def update(
     case_id: int,
     body: CasePatch,
-    agent: Agent = Depends(current_agent),
+    agent: Agent = Depends(require_permission(Permission.CASES_MANAGE)),
     db: Session = Depends(get_db),
 ) -> CaseDetail:
     fields = body.model_dump(exclude_none=True)
@@ -127,7 +163,7 @@ def update(
 def change_stage(
     case_id: int,
     body: CaseStageIn,
-    agent: Agent = Depends(current_agent),
+    agent: Agent = Depends(require_permission(Permission.CASES_MANAGE)),
     db: Session = Depends(get_db),
 ) -> CaseDetail:
     case = svc.change_stage(db, agent, case_id, body.stage, body.contact_reason_id)
@@ -138,7 +174,7 @@ def change_stage(
 def transfer(
     case_id: int,
     body: CaseTransferIn,
-    agent: Agent = Depends(current_agent),
+    agent: Agent = Depends(require_permission(Permission.CASES_MANAGE)),
     db: Session = Depends(get_db),
 ) -> CaseDetail:
     return to_detail(db, agent, svc.transfer(db, agent, case_id, body.area_id))
@@ -146,7 +182,9 @@ def transfer(
 
 @router.post("/{case_id}/take", response_model=CaseDetail)
 def take(
-    case_id: int, agent: Agent = Depends(current_agent), db: Session = Depends(get_db)
+    case_id: int,
+    agent: Agent = Depends(require_permission(Permission.CASES_MANAGE)),
+    db: Session = Depends(get_db),
 ) -> CaseDetail:
     return to_detail(db, agent, svc.take(db, agent, case_id))
 
@@ -155,7 +193,7 @@ def take(
 def assign(
     case_id: int,
     body: CaseAssignIn,
-    agent: Agent = Depends(current_agent),
+    agent: Agent = Depends(require_permission(Permission.CASES_MANAGE)),
     db: Session = Depends(get_db),
 ) -> CaseDetail:
     return to_detail(db, agent, svc.assign(db, agent, case_id, body.agent_id))
@@ -165,7 +203,7 @@ def assign(
 def add_note(
     case_id: int,
     body: CaseNoteIn,
-    agent: Agent = Depends(current_agent),
+    agent: Agent = Depends(require_permission(Permission.CASES_MANAGE)),
     db: Session = Depends(get_db),
 ) -> CaseNote:
     return svc.add_note(db, agent, case_id, body.body)
@@ -175,7 +213,7 @@ def add_note(
 def create_task(
     case_id: int,
     body: CaseTaskIn,
-    agent: Agent = Depends(current_agent),
+    agent: Agent = Depends(require_permission(Permission.TASKS_ASSIGN)),
     db: Session = Depends(get_db),
 ) -> CaseTask:
     return svc.create_task(db, agent, case_id, **body.model_dump())
@@ -185,7 +223,7 @@ def create_task(
 def complete_task(
     case_id: int,
     task_id: int,
-    agent: Agent = Depends(current_agent),
+    agent: Agent = Depends(require_permission(Permission.TASKS_ASSIGN)),
     db: Session = Depends(get_db),
 ) -> CaseTask:
     return svc.finish_task(db, agent, case_id, task_id, CaseTaskStatus.DONE)
@@ -195,7 +233,7 @@ def complete_task(
 def cancel_task(
     case_id: int,
     task_id: int,
-    agent: Agent = Depends(current_agent),
+    agent: Agent = Depends(require_permission(Permission.TASKS_ASSIGN)),
     db: Session = Depends(get_db),
 ) -> CaseTask:
     return svc.finish_task(db, agent, case_id, task_id, CaseTaskStatus.CANCELLED)

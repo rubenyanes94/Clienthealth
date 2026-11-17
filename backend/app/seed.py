@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
+from app.db.base import utcnow
 from app.db.session import get_sessionmaker
 from app.models import Agent, Area, BusinessHours, ContactReason, FaqEntry, Holiday
 from app.models.enums import AgentRole
@@ -129,6 +130,7 @@ def seed(db: Session, admin_email: str | None, admin_password: str | None) -> No
                     name="Administrador",
                     email=email,
                     password_hash=hash_password(admin_password),
+                    password_set_at=utcnow(),
                     role=AgentRole.ADMIN,
                 )
             )

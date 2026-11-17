@@ -26,6 +26,7 @@ import {
   EditCaseDialog,
   TransferCaseDialog,
 } from "./CaseDialogs";
+import { CaseChatDialog } from "./CaseChatDialog";
 import { StagePath } from "./StagePath";
 import { STAGE_LABEL, stepLabel } from "./stages";
 import { TASK_LABEL } from "./tasks";
@@ -200,7 +201,9 @@ export function CaseDetailPage() {
   const toast = useToast();
   const { take } = useCaseActions(id);
   const [tab, setTab] = useState<Tab>("detalles");
-  const [dialog, setDialog] = useState<"transfer" | "close" | "edit" | "assign" | null>(null);
+  const [dialog, setDialog] = useState<"transfer" | "close" | "edit" | "assign" | "chat" | null>(
+    null,
+  );
   const c = query.data;
 
   return (
@@ -352,18 +355,17 @@ export function CaseDetailPage() {
                     <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold">
                       <MessagesSquare className="size-4" aria-hidden /> Conversación
                     </h2>
-                    {c.can_view_conversation ? (
-                      <Link
-                        to={`/conversaciones/${c.conversation_id}`}
-                        className="inline-flex h-11 items-center gap-2 rounded-full bg-surface-3 px-5 text-sm font-medium text-ink-2 transition hover:bg-ink hover:text-white"
-                      >
-                        Abrir chat
-                      </Link>
-                    ) : (
-                      <p className="text-sm text-ink-3">
-                        Creado desde un chat que está asignado a otra persona o área.
-                      </p>
-                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <Button onClick={() => setDialog("chat")}>Ver conversación</Button>
+                      {c.can_view_conversation && (
+                        <Link
+                          to={`/conversaciones/${c.conversation_id}`}
+                          className="inline-flex h-11 items-center gap-2 rounded-full bg-surface-3 px-5 text-sm font-medium text-ink-2 transition hover:bg-ink hover:text-white"
+                        >
+                          Abrir chat
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 )}
               </aside>
@@ -374,6 +376,13 @@ export function CaseDetailPage() {
               open={dialog === "transfer"}
               onClose={() => setDialog(null)}
             />
+            {c.conversation_id !== null && (
+              <CaseChatDialog
+                caseId={c.id}
+                open={dialog === "chat"}
+                onClose={() => setDialog(null)}
+              />
+            )}
             <AssignCaseDialog item={c} open={dialog === "assign"} onClose={() => setDialog(null)} />
             <CloseCaseDialog item={c} open={dialog === "close"} onClose={() => setDialog(null)} />
             <EditCaseDialog item={c} open={dialog === "edit"} onClose={() => setDialog(null)} />

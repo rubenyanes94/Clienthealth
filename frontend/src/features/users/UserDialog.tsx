@@ -1,17 +1,30 @@
 import { useState } from "react";
-import { useCatalog, useMe, useSaveUser } from "@/api/hooks";
-import type { Agent, AgentRole } from "@/api/types";
+import { useCatalog, useCreateUser, useMe, useSaveUser } from "@/api/hooks";
+import { Mail } from "lucide-react";
+import type { Access, Agent, AgentRole } from "@/api/types";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { Segmented } from "@/components/ui/Segmented";
 import { fieldClass, Sheet } from "@/components/ui/Sheet";
 import { useToast } from "@/components/ui/Toast";
-import { MIN_PASSWORD, ROLE_LABEL, ROLES } from "./roles";
+import { ROLE_LABEL, ROLES } from "./roles";
 
-function UserForm({ user, onClose }: { user?: Agent; onClose: () => void }) {
+function UserForm({
+  user,
+  onClose,
+  onAccess,
+  onSendAccess,
+}: {
+  user?: Agent;
+  onClose: () => void;
+  onAccess: (access: Access, agent: Agent) => void;
+  onSendAccess: (agent: Agent) => void;
+}) {
   const me = useMe();
   const catalog = useCatalog();
-  const save = useSaveUser(user?.id);
+  const update = useSaveUser(user?.id ?? 0);
+  const create = useCreateUser();
+  const save = user ? update : create;
   const toast = useToast();
   const isSelf = user?.id === me.data?.id;
 
@@ -19,27 +32,29 @@ function UserForm({ user, onClose }: { user?: Agent; onClose: () => void }) {
   const [email, setEmail] = useState(user?.email ?? "");
   const [role, setRole] = useState<AgentRole>(user?.role ?? "agent");
   const [areaId, setAreaId] = useState<number | "">(user?.area_id ?? "");
-  const [password, setPassword] = useState("");
-
-  const passwordOk = user
-    ? password === "" || password.length >= MIN_PASSWORD
-    : password.length >= MIN_PASSWORD;
   const valid =
-    name.trim().length >= 2 &&
-    (user !== undefined || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) &&
-    passwordOk;
+    name.trim().length >= 2 && (user !== undefined || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
 
   const submit = () => {
     const common = { name: name.trim(), role, area_id: areaId === "" ? null : areaId };
-    const body = user
-      ? { ...common, ...(password ? { password } : {}) }
-      : { ...common, email: email.trim(), password };
-    save.mutate(body, {
-      onSuccess: () => {
-        toast.ok(user ? "Usuario actualizado" : "Usuario creado");
-        onClose();
+    if (user) {
+      update.mutate(common, {
+        onSuccess: () => {
+          toast.ok("Usuario actualizado");
+          onClose();
+        },
+      });
+      return;
+    }
+    create.mutate(
+      { ...common, email: email.trim() },
+      {
+        onSuccess: (created) => {
+          if (created.access) onAccess(created.access, created.agent);
+          onClose();
+        },
       },
-    });
+    );
   };
 
   return (
@@ -80,25 +95,6 @@ function UserForm({ user, onClose }: { user?: Agent; onClose: () => void }) {
             ))}
           </select>
         </Field>
-        <Field
-          label={user ? "Contraseña nueva (opcional)" : "Contraseña inicial"}
-          htmlFor="user-password"
-          required={!user}
-          error={
-            password && password.length < MIN_PASSWORD
-              ? `Mínimo ${MIN_PASSWORD} caracteres`
-              : undefined
-          }
-        >
-          <input
-            id="user-password"
-            type="password"
-            autoComplete="new-password"
-            className={fieldClass}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </Field>
         <div className="sm:col-span-2">
           <span className="mb-1.5 block text-sm font-medium">Rol</span>
           {isSelf ? (
@@ -115,9 +111,30 @@ function UserForm({ user, onClose }: { user?: Agent; onClose: () => void }) {
           )}
         </div>
       </div>
-      <p className="mt-4 text-sm text-ink-3">
-        Pídale a la persona que cambie su contraseña en «Mi cuenta» al entrar por primera vez.
-      </p>
+      {user ? (
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-surface-2 p-4">
+          <p className="max-w-xs text-sm text-ink-2">
+            {user.password_set_at
+              ? "Le enviaremos un enlace para que cree una contraseña nueva."
+              : "Aún no ha creado su contraseña. Puede reenviarle la invitación."}
+          </p>
+          <Button
+            disabled={!user.is_active}
+            onClick={() => {
+              onSendAccess(user);
+              onClose();
+            }}
+          >
+            <Mail className="size-4" aria-hidden />
+            {user.password_set_at ? "Enviar enlace" : "Reenviar invitación"}
+          </Button>
+        </div>
+      ) : (
+        <p className="mt-4 rounded-2xl bg-surface-2 px-4 py-3 text-sm text-ink-2">
+          Le enviaremos un correo a <strong>{email.trim() || "la persona"}</strong> para que cree su
+          contraseña. Nadie más la conocerá, tampoco usted.
+        </p>
+      )}
       {save.error && (
         <p role="alert" className="mt-4 rounded-2xl bg-danger-soft px-4 py-3 text-sm text-danger">
           {save.error.message}
@@ -128,7 +145,7 @@ function UserForm({ user, onClose }: { user?: Agent; onClose: () => void }) {
           Cancelar
         </Button>
         <Button size="lg" variant="primary" disabled={!valid || save.isPending} onClick={submit}>
-          Guardar
+          {user ? "Guardar" : save.isPending ? "Enviando…" : "Crear y enviar invitación"}
         </Button>
       </div>
     </>
@@ -139,10 +156,14 @@ export function UserDialog({
   open,
   onClose,
   user,
+  onAccess,
+  onSendAccess,
 }: {
   open: boolean;
   onClose: () => void;
   user?: Agent;
+  onAccess: (access: Access, agent: Agent) => void;
+  onSendAccess: (agent: Agent) => void;
 }) {
   return (
     <Sheet
@@ -151,7 +172,7 @@ export function UserDialog({
       size="lg"
       title={user ? "Editar usuario" : "Nuevo usuario"}
     >
-      <UserForm user={user} onClose={onClose} />
+      <UserForm user={user} onClose={onClose} onAccess={onAccess} onSendAccess={onSendAccess} />
     </Sheet>
   );
 }

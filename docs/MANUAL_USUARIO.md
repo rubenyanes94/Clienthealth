@@ -52,16 +52,40 @@ un caso, quién cambió su etapa, quién completó una tarea. Por eso:
 3. Pulse **Entrar**. Llegará a la pantalla **Casos**.
 4. Para salir, pulse el icono de salida (abajo en el menú lateral) o **Salir**.
 
-Si olvidó su contraseña, pídale a un administrador que la restablezca (ver [Usuarios](#10-usuarios-solo-administradores)).
-Después puede cambiarla usted en [Mi cuenta](#11-mi-cuenta).
+**Primera vez.** Su cuenta la crea un administrador. Le llegará un correo «Active su cuenta de
+Atención al Paciente»: pulse **Crear mi contraseña**, escríbala dos veces y pulse **Crear contraseña y
+entrar**. El enlace vence en 72 horas y solo sirve una vez; si venció, pida otro al administrador.
 
-### 1.4 Roles: qué ve cada persona
+**¿Olvidó su contraseña?**
 
-| Rol | Qué puede hacer |
-|---|---|
-| **Agente** | Casos, pacientes y tareas (todas las áreas se ven entre sí). En conversaciones, la cola de su área y sus propios chats. |
-| **Supervisor** | Lo del agente, más **todas** las conversaciones (incluidas las del bot), **Paneles** e **Informes**. |
-| **Administrador** | Lo del supervisor, más **Usuarios** y los catálogos del centro. |
+1. En la pantalla de entrada, pulse **¿Olvidó su contraseña?**.
+2. Escriba su correo y pulse **Enviar enlace**.
+3. Abra el correo «Restablezca su contraseña» y pulse el botón. El enlace vence en una hora.
+4. Escriba la nueva contraseña dos veces y pulse **Guardar y entrar**.
+
+Por seguridad, la pantalla dice lo mismo exista o no la cuenta. Si no le llega, revise el correo no
+deseado o pida ayuda a un administrador. Al cambiar la contraseña se cierran sus demás sesiones.
+
+### 1.4 Roles: qué puede hacer cada persona
+
+Hay tres roles. Los **empleados** (rol *Agente*) trabajan los casos de todas las áreas; los
+**supervisores** además miden; los **administradores** además configuran.
+
+| Puede… | Agente | Supervisor | Administrador |
+|---|:-:|:-:|:-:|
+| Crear casos y gestionarlos (etapas, asignar, transferir, editar, notas) | ✓ | ✓ | ✓ |
+| Ver la historia de los casos, incluido el chat del que nacieron | ✓ | ✓ | ✓ |
+| Asignar tareas a cualquier persona, completarlas y cancelarlas | ✓ | ✓ | ✓ |
+| Registrar, buscar y editar pacientes | ✓ | ✓ | ✓ |
+| Atender los chats de WhatsApp de su área | ✓ | ✓ | ✓ |
+| Ver todos los chats, incluidos los del bot | | ✓ | ✓ |
+| Ver **Paneles** e **Informes** | | ✓ | ✓ |
+| Simular mensajes de prueba (fuera de producción) | | ✓ | ✓ |
+| Crear y gestionar cuentas (**Usuarios**) | | | ✓ |
+| Configurar áreas, motivos, preguntas del bot y horarios | | | ✓ |
+
+Cada persona puede ver lo que su rol le permite en **Mi cuenta**, bajo «Qué puede hacer». Si una
+pantalla no está en su menú, no tiene permiso para usarla; si entra por un enlace, verá un aviso.
 
 ### 1.5 El menú lateral
 
@@ -169,7 +193,7 @@ Se abre al tocar un caso en cualquier lista.
 - **Datos clave:** paciente, área, responsable, cuándo se abrió y el origen (*Presencial* o *WhatsApp*).
 - **La barra de etapas.** Muestra por dónde va el caso. La etapa actual está en negro, las anteriores con una marca ✓. *En espera* se muestra apagada si el caso nunca pasó por ahí. A su derecha están los botones para avanzar.
 - **Pestañas:** **Detalles**, **Notas** y **Actividad**.
-- **A la derecha:** el paciente (toque para abrir su ficha), las **Tareas** y, si el caso nació de un chat, un botón **Abrir chat**.
+- **A la derecha:** el paciente (toque para abrir su ficha), las **Tareas** y, si el caso nació de un chat, la tarjeta **Conversación** (ver [3.7](#37-la-conversación-del-caso)).
 
 ### 3.2 Las etapas
 
@@ -233,6 +257,13 @@ Pulse **Editar** para cambiar el asunto, la descripción o la prioridad. Un caso
 - **Actividad.** El historial completo: creación, cambios de etapa, asignaciones, transferencias, tareas y notas, cada uno con quién lo hizo y cuándo.
 
 > Escriba las notas con criterio: son datos de salud del paciente y las ve todo el personal que tenga acceso a la consola.
+
+### 3.7 La conversación del caso
+
+Si el caso nació de un chat de WhatsApp, a la derecha aparece la tarjeta **Conversación**:
+
+- **Ver conversación:** abre el chat completo en **solo lectura**, aunque sea de otra área. Forma parte de la historia del caso.
+- **Abrir chat:** solo aparece si el chat es de su área o está a su nombre. Lleva a Conversaciones, donde se puede responder.
 
 ---
 
@@ -511,15 +542,20 @@ Aquí se crean y se gestionan las cuentas. **Cada persona debe tener la suya.**
 1. Pulse **Nuevo usuario**.
 2. Escriba el **Nombre y apellido** y el **Correo** (será su usuario; no se puede cambiar después).
 3. Elija su **Área** o deje **Sin área (todas)**.
-4. Escriba una **Contraseña inicial** (mínimo 10 caracteres).
-5. Elija el **Rol**: *Agente*, *Supervisor* o *Administrador*.
-6. Pulse **Guardar**.
-7. Entréguele la contraseña a la persona y pídale que la cambie en **Mi cuenta** en su primer ingreso.
+4. Elija el **Rol**: *Agente*, *Supervisor* o *Administrador*.
+5. Pulse **Crear y enviar invitación**.
+
+La persona recibe un correo para crear **su propia** contraseña: nadie más la conoce, tampoco usted.
+Mientras no la cree, la lista la muestra como **Invitación pendiente**.
+
+- **Si no le llegó o venció:** pulse **Reenviar** en su fila. El enlace anterior deja de servir.
+- **Si el correo no pudo salir,** la consola lo avisa y ofrece **Reintentar**. La cuenta queda creada igual.
+- **En pruebas** (sin servidor de correo) aparece «Modo pruebas» con el enlace para copiarlo y entregarlo a mano. En producción esto no ocurre.
 
 ### 10.2 Editar, restablecer o desactivar
 
 - **Editar:** toque la fila. Puede cambiar nombre, área y rol.
-- **Restablecer contraseña:** dentro de la edición, escriba una **Contraseña nueva** y guarde.
+- **Restablecer la contraseña:** dentro de la edición, pulse **Enviar enlace**. La persona recibe un correo para crear una nueva; usted no la conoce.
 - **Desactivar:** pulse **Desactivar** en su fila. La persona ya no podrá entrar, pero lo que hizo se conserva con su nombre. **Activar** la restituye.
 
 No puede cambiarse su propio rol ni desactivar su propia cuenta, para que el centro no se quede sin administrador.
@@ -533,7 +569,7 @@ La columna **Última actividad** muestra cuándo estuvo conectada cada persona.
 1. Pulse su **nombre** (abajo en el menú lateral).
 2. Verá sus datos: nombre, correo, rol y área.
 3. Para cambiar la contraseña, escriba la **actual**, la **nueva** (mínimo 10 caracteres) y repítala.
-4. Pulse **Guardar**.
+4. Pulse **Guardar**. Sus otras sesiones abiertas (por ejemplo, en otra tableta) se cierran.
 
 Úsela solo usted. Todo lo que se haga con su cuenta se le atribuye.
 
@@ -548,9 +584,11 @@ La columna **Última actividad** muestra cuándo estuvo conectada cada persona.
 | No puedo transferir el caso | Solo se transfieren casos *Registrado*, *En atención* o *En espera*. Uno resuelto o cerrado no |
 | No puedo editar, asignar ni crear tareas | El caso está **cerrado**. Pulse **Reabrir caso** |
 | *«Ya existe un paciente con esa cédula»* | El paciente ya está registrado: búsquelo en **Pacientes** |
+| *«El enlace no es válido o ya venció»* | Los enlaces del correo sirven una vez y vencen (72 h la invitación, 1 h el restablecimiento). Pida otro con **¿Olvidó su contraseña?** o al administrador |
+| Me sacó de la sesión sin tocar nada | Alguien cambió o restableció su contraseña, y eso cierra las sesiones abiertas. Entre con la contraseña nueva |
 | *«Escríbalo así: 4141234567»* | El teléfono no tiene el formato correcto. Escriba 10 dígitos, sin el 0 inicial |
 | No puedo responder en un chat | Primero **acepte** el caso, o pasaron más de 24 horas del último mensaje del paciente |
-| No veo un chat de otra área | Los chats se ven por área. Los **casos** y los **pacientes**, en cambio, los ven todas las áreas |
+| No veo un chat de otra área | En Conversaciones los chats se ven por área. Si el chat dio origen a un caso, puede leerlo desde el caso con **Ver conversación** |
 | No veo Paneles, Informes o Usuarios | Son solo para supervisores y administradores. Pida el cambio de rol a un administrador |
 | La campana tiene un círculo rojo pero no veo nada nuevo | Ábrala: puede haber una notificación sin leer más abajo. Use **Marcar todas como leídas** |
 | La página no carga o dice «error 502» | Es un problema de conexión con el servidor. Espere un minuto y recargue; si persiste, avise a soporte |

@@ -19,7 +19,7 @@ cp ../.env.example .env                       # y completa JWT_SECRET, etc.
 .venv/bin/alembic upgrade head
 ADMIN_EMAIL=... ADMIN_PASSWORD=... .venv/bin/python -m app.seed
 .venv/bin/uvicorn app.main:app --reload --port 8000
-.venv/bin/python -m scripts.demo_data          # 14 días de datos ficticios para los paneles
+.venv/bin/python -m scripts.demo_data          # 14 días de datos ficticios (chats, pacientes, casos, tareas) y estado «en vivo»; vuelve a correrlo antes de una demostración
 .venv/bin/ruff check . && .venv/bin/ruff format --check . && .venv/bin/pytest -q
 
 # Frontend
@@ -32,6 +32,7 @@ npm run lint && npx tsc -b --noEmit && npm test && npm run build
 ## Reglas rápidas
 
 - Routers bajo `/api`; el frontend solo usa rutas relativas `/api/...`. Tipos de la API generados, nunca a mano.
+- Permisos: solo en `app/core/permissions.py`; rutas con `require_permission(...)`, interfaz con `useCan()`. Nunca compares roles a mano.
 - Todo cambio de estado llama a `events.record(...)` (conversaciones) o `events.record_case(...)` (casos) en la misma transacción.
 - Un *caso* (`Case`, módulo de Casos) no es una *conversación* (chat de WhatsApp): ver §20 de la infraestructura.
 - Si cambias un flujo o un texto de la interfaz, actualiza [docs/MANUAL_USUARIO.md](docs/MANUAL_USUARIO.md).

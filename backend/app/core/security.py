@@ -22,22 +22,24 @@ def verify_password(password: str, password_hash: str) -> bool:
         return False
 
 
-def create_access_token(agent_id: int) -> str:
+def create_access_token(agent_id: int, session_version: int = 0) -> str:
     settings = get_settings()
     now = utcnow()
     payload = {
         "sub": str(agent_id),
+        "ver": session_version,
         "iat": now,
         "exp": now + timedelta(minutes=settings.jwt_expire_minutes),
     }
     return jwt.encode(payload, settings.jwt_secret, algorithm=JWT_ALGORITHM)
 
 
-def decode_access_token(token: str) -> int | None:
+def decode_access_token(token: str) -> tuple[int, int] | None:
+    """(id del agente, versión de sesión), o None si el token no es válido."""
     try:
         payload = jwt.decode(token, get_settings().jwt_secret, algorithms=[JWT_ALGORITHM])
-        return int(payload["sub"])
-    except (jwt.PyJWTError, KeyError, ValueError):
+        return int(payload["sub"]), int(payload.get("ver", 0))
+    except (jwt.PyJWTError, KeyError, ValueError, TypeError):
         return None
 
 

@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import require_supervisor
+from app.api.deps import require_permission
+from app.core.permissions import Permission
 from app.db.base import utcnow
 from app.db.session import get_db
 from app.models import Agent, Area, ContactReason
@@ -21,7 +22,11 @@ from app.schemas.metrics import (
 )
 from app.services import case_metrics, metrics
 
-router = APIRouter(prefix="/metrics", tags=["metrics"], dependencies=[Depends(require_supervisor)])
+router = APIRouter(
+    prefix="/metrics",
+    tags=["metrics"],
+    dependencies=[Depends(require_permission(Permission.METRICS_VIEW))],
+)
 
 MAX_DAYS = 366
 

@@ -1,6 +1,8 @@
 import { createBrowserRouter, Navigate } from "react-router";
 import { AppShell } from "./AppShell";
+import { ForgotPasswordPage } from "./features/auth/ForgotPasswordPage";
 import { LoginPage } from "./features/auth/LoginPage";
+import { ResetPasswordPage } from "./features/auth/ResetPasswordPage";
 import { RequireAuth } from "./features/auth/RequireAuth";
 import { CaseDetailPage } from "./features/cases/CaseDetailPage";
 import { CasesPage } from "./features/cases/CasesPage";
@@ -13,6 +15,8 @@ import { LazyPanelsPage, LazyReportsPage } from "./features/metrics/lazy";
 
 export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
+  { path: "/recuperar", element: <ForgotPasswordPage /> },
+  { path: "/restablecer", element: <ResetPasswordPage /> },
   {
     element: (
       <RequireAuth>

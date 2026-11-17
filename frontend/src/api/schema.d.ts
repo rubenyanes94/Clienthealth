@@ -104,8 +104,70 @@ export interface paths {
     /**
      * Change Password
      * @description Cada persona pone su propia clave: lo que se haga con su cuenta solo pudo hacerlo ella.
+     *
+     *     Cierra las demás sesiones abiertas y renueva la de este dispositivo.
      */
     post: operations["change_password_api_auth_password_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/auth/password-reset/request": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Request Password Reset
+     * @description «¿Olvidó su contraseña?». Responde igual exista o no la cuenta, para no revelar correos.
+     */
+    post: operations["request_password_reset_api_auth_password_reset_request_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/auth/password-reset/verify": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Verify Reset Token
+     * @description POST y no GET: el enlace no debe quedar en la URL de ninguna petición ni en los registros.
+     */
+    post: operations["verify_reset_token_api_auth_password_reset_verify_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/auth/password-reset/confirm": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Confirm Password Reset
+     * @description Crea o cambia la contraseña con el enlace y deja la sesión iniciada.
+     */
+    post: operations["confirm_password_reset_api_auth_password_reset_confirm_post"];
     delete?: never;
     options?: never;
     head?: never;
@@ -523,6 +585,28 @@ export interface paths {
     head?: never;
     /** Update */
     patch: operations["update_api_cases__case_id__patch"];
+    trace?: never;
+  };
+  "/api/cases/{case_id}/conversation": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Case Conversation
+     * @description Quien puede ver el caso puede leer el chat del que nació, aunque sea de otra área.
+     *
+     *     Es solo lectura: responder, anotar o cambiar el chat sigue las reglas de Conversaciones.
+     */
+    get: operations["case_conversation_api_cases__case_id__conversation_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
     trace?: never;
   };
   "/api/cases/{case_id}/stage": {
@@ -997,8 +1081,31 @@ export interface paths {
     /** List Agents */
     get: operations["list_agents_api_admin_agents_get"];
     put?: never;
-    /** Create Agent */
+    /**
+     * Create Agent
+     * @description Crea la cuenta y envía la invitación por correo: el administrador no conoce la contraseña.
+     */
     post: operations["create_agent_api_admin_agents_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/admin/agents/{agent_id}/send-access": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Send Access
+     * @description Reenvía la invitación o, si ya tiene contraseña, un enlace para restablecerla.
+     */
+    post: operations["send_access_api_admin_agents__agent_id__send_access_post"];
     delete?: never;
     options?: never;
     head?: never;
@@ -1123,6 +1230,30 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    /**
+     * AccessOut
+     * @description Resultado de enviar un enlace de acceso por correo.
+     */
+    AccessOut: {
+      /** Email Sent */
+      email_sent: boolean;
+      /** Dry Run */
+      dry_run: boolean;
+      /** Error */
+      error: string | null;
+      /** Link Path */
+      link_path: string | null;
+    };
+    /**
+     * AccountTokenPurpose
+     * @enum {string}
+     */
+    AccountTokenPurpose: "invite" | "reset";
+    /** AgentCreated */
+    AgentCreated: {
+      agent: components["schemas"]["AgentOut"];
+      access: components["schemas"]["AccessOut"] | null;
+    };
     /** AgentDirectoryEntry */
     AgentDirectoryEntry: {
       /** Id */
@@ -1142,7 +1273,7 @@ export interface components {
        */
       email: string;
       /** Password */
-      password: string;
+      password?: string | null;
       /** @default agent */
       role: components["schemas"]["AgentRole"];
       /** Area Id */
@@ -1163,6 +1294,8 @@ export interface components {
       is_active: boolean;
       /** Last Seen At */
       last_seen_at: string | null;
+      /** Password Set At */
+      password_set_at: string | null;
     };
     /** AgentPatch */
     AgentPatch: {
@@ -1373,6 +1506,27 @@ export interface components {
        * Format: date-time
        */
       opened_at: string;
+    };
+    /**
+     * CaseConversation
+     * @description El chat del que nació el caso, en solo lectura: es parte de su historia.
+     */
+    CaseConversation: {
+      /** Id */
+      id: number;
+      status: components["schemas"]["ConversationStatus"];
+      area: components["schemas"]["AreaRef"] | null;
+      /** Contact Name */
+      contact_name: string | null;
+      /**
+       * Opened At
+       * Format: date-time
+       */
+      opened_at: string;
+      /** Closed At */
+      closed_at: string | null;
+      /** Messages */
+      messages: components["schemas"]["MessageOut"][];
     };
     /** CaseDetail */
     CaseDetail: {
@@ -2059,6 +2213,29 @@ export interface components {
       password: string;
     };
     /**
+     * MeOut
+     * @description La sesión: los datos de la persona y lo que su rol le permite hacer.
+     */
+    MeOut: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string;
+      /** Email */
+      email: string;
+      role: components["schemas"]["AgentRole"];
+      /** Area Id */
+      area_id: number | null;
+      /** Is Active */
+      is_active: boolean;
+      /** Last Seen At */
+      last_seen_at: string | null;
+      /** Password Set At */
+      password_set_at: string | null;
+      /** Permissions */
+      permissions: components["schemas"]["Permission"][];
+    };
+    /**
      * MessageDirection
      * @enum {string}
      */
@@ -2354,6 +2531,21 @@ export interface components {
       cursor?: string | null;
     };
     /**
+     * Permission
+     * @enum {string}
+     */
+    Permission:
+      | "cases.manage"
+      | "cases.history"
+      | "tasks.assign"
+      | "patients.manage"
+      | "conversations.area"
+      | "conversations.all"
+      | "simulator.use"
+      | "metrics.view"
+      | "users.manage"
+      | "catalog.manage";
+    /**
      * Priority
      * @enum {string}
      */
@@ -2416,6 +2608,31 @@ export interface components {
       count: number;
       /** Share */
       share: number | null;
+    };
+    /** ResetConfirmIn */
+    ResetConfirmIn: {
+      /** Token */
+      token: string;
+      /** New Password */
+      new_password: string;
+    };
+    /** ResetRequestIn */
+    ResetRequestIn: {
+      /** Email */
+      email: string;
+    };
+    /** ResetTokenIn */
+    ResetTokenIn: {
+      /** Token */
+      token: string;
+    };
+    /** ResetTokenOut */
+    ResetTokenOut: {
+      purpose: components["schemas"]["AccountTokenPurpose"];
+      /** Name */
+      name: string;
+      /** Email */
+      email: string;
     };
     /** ScheduleIn */
     ScheduleIn: {
@@ -2613,7 +2830,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["AgentOut"];
+          "application/json": components["schemas"]["MeOut"];
         };
       };
       /** @description Validation Error */
@@ -2676,6 +2893,103 @@ export interface operations {
       };
     };
   };
+  request_password_reset_api_auth_password_reset_request_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ResetRequestIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  verify_reset_token_api_auth_password_reset_verify_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ResetTokenIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ResetTokenOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  confirm_password_reset_api_auth_password_reset_confirm_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ResetConfirmIn"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MeOut"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
   me_api_auth_me_get: {
     parameters: {
       query?: never;
@@ -2691,7 +3005,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["AgentOut"];
+          "application/json": components["schemas"]["MeOut"];
         };
       };
     };
@@ -3474,6 +3788,37 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["CaseDetail"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  case_conversation_api_cases__case_id__conversation_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        case_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["CaseConversation"];
         };
       };
       /** @description Validation Error */
@@ -4457,7 +4802,38 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["AgentOut"];
+          "application/json": components["schemas"]["AgentCreated"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  send_access_api_admin_agents__agent_id__send_access_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        agent_id: number;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AccessOut"];
         };
       };
       /** @description Validation Error */

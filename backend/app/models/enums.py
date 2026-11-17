@@ -102,6 +102,11 @@ class CaseEventType(StrEnum):
     TASK_CANCELLED = "task_cancelled"
 
 
+class AccountTokenPurpose(StrEnum):
+    INVITE = "invite"  # cuenta nueva: la persona crea su primera contraseña
+    RESET = "reset"  # olvidó su contraseña o el administrador le envió un enlace
+
+
 class NotificationType(StrEnum):
     TASK_ASSIGNED = "task_assigned"
     CASE_ASSIGNED = "case_assigned"

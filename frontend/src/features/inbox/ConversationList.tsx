@@ -1,11 +1,12 @@
 import clsx from "clsx";
 import { Inbox } from "lucide-react";
 import { Link } from "react-router";
-import { useInbox, useLiveMetrics, useMe } from "@/api/hooks";
+import { useInbox, useLiveMetrics } from "@/api/hooks";
 import type { InboxFilter } from "@/api/types";
 import { Avatar } from "@/components/ui/Avatar";
 import { Segmented } from "@/components/ui/Segmented";
 import { formatListTime } from "@/lib/format";
+import { useCan } from "../auth/permissions";
 import { StatusPill, UrgentPill, WaitTimer } from "./bits";
 import { contactName } from "./permissions";
 
@@ -20,10 +21,10 @@ export function ConversationList({
   onFilter: (filter: InboxFilter) => void;
   selectedId: number | null;
 }) {
-  const me = useMe();
+  const can = useCan();
   const live = useLiveMetrics();
   const inbox = useInbox(filter);
-  const isSupervisor = me.data?.role !== "agent";
+  const seesAll = can("conversations.all");
 
   const options: { value: InboxFilter; label: string; count?: number }[] = [
     { value: "open", label: "Abiertas" },
@@ -32,7 +33,7 @@ export function ConversationList({
     { value: "pending", label: "En espera" },
     { value: "closed", label: "Cerradas" },
   ];
-  if (isSupervisor) options.push({ value: "bot", label: "Bot", count: live.data?.in_bot });
+  if (seesAll) options.push({ value: "bot", label: "Bot", count: live.data?.in_bot });
 
   return (
     <section aria-label="Bandeja" className="flex h-full min-h-0 flex-col">
