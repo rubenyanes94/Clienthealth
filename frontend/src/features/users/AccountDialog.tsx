@@ -1,9 +1,12 @@
+import { Check } from "lucide-react";
 import { useState } from "react";
 import { useCatalog, useChangePassword, useMe } from "@/api/hooks";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { fieldClass, Sheet } from "@/components/ui/Sheet";
 import { useToast } from "@/components/ui/Toast";
+import type { Permission } from "@/api/types";
+import { PERMISSION_LABEL } from "../auth/permissions";
 import { MIN_PASSWORD, ROLE_LABEL } from "./roles";
 
 function AccountForm({ onClose }: { onClose: () => void }) {
@@ -34,6 +37,18 @@ function AccountForm({ onClose }: { onClose: () => void }) {
           </div>
         ))}
       </dl>
+
+      <h3 className="mb-2 text-sm font-semibold">Qué puede hacer</h3>
+      <ul className="mb-6 space-y-1.5 text-sm text-ink-2">
+        {(Object.keys(PERMISSION_LABEL) as Permission[])
+          .filter((p) => me.data?.permissions.includes(p))
+          .map((p) => (
+            <li key={p} className="flex gap-2">
+              <Check className="mt-0.5 size-4 shrink-0 text-ok" aria-hidden />
+              {PERMISSION_LABEL[p]}
+            </li>
+          ))}
+      </ul>
 
       <h3 className="mb-1 text-sm font-semibold">Cambiar contraseña</h3>
       <p className="mb-4 text-sm text-ink-3">

@@ -45,6 +45,10 @@ class Agent(Base):
     area_id: Mapped[int | None] = mapped_column(ForeignKey("areas.id"))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     last_seen_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    # Cuándo la persona puso su contraseña; vacío = invitación pendiente.
+    password_set_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    # Va dentro de cada sesión. Subirlo cierra todas las sesiones abiertas de la persona.
+    session_version: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     created_at: Mapped[datetime] = mapped_column(UTCDateTime, default=utcnow)
 
     area: Mapped[Area | None] = relationship()

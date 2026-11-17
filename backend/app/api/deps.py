@@ -5,6 +5,7 @@ from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.core.permissions import Permission, has
 from app.core.security import decode_access_token
 from app.db.base import utcnow
 from app.db.session import get_db
@@ -16,9 +17,12 @@ LAST_SEEN_RESOLUTION = timedelta(seconds=60)
 
 def current_agent(request: Request, db: Session = Depends(get_db)) -> Agent:
     token = request.cookies.get(get_settings().session_cookie_name)
-    agent_id = decode_access_token(token) if token else None
-    agent = db.get(Agent, agent_id) if agent_id else None
+    session = decode_access_token(token) if token else None
+    agent = db.get(Agent, session[0]) if session else None
     if agent is None or not agent.is_active:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Sesión no válida")
+    # Una sesión abierta antes de cambiar la contraseña ya no vale.
+    if session[1] != agent.session_version:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Sesión no válida")
 
     now = utcnow()
@@ -31,6 +35,17 @@ def current_agent(request: Request, db: Session = Depends(get_db)) -> Agent:
 def require_role(*roles: AgentRole) -> Callable[..., Agent]:
     def dependency(agent: Agent = Depends(current_agent)) -> Agent:
         if agent.role not in roles:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "No tiene permisos para esta acción")
+        return agent
+
+    return dependency
+
+
+def require_permission(permission: Permission) -> Callable[..., Agent]:
+    """Exige un permiso de la matriz de `app/core/permissions.py`."""
+
+    def dependency(agent: Agent = Depends(current_agent)) -> Agent:
+        if not has(agent.role, permission):
             raise HTTPException(status.HTTP_403_FORBIDDEN, "No tiene permisos para esta acción")
         return agent
 

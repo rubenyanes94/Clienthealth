@@ -7,13 +7,17 @@ from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.api.deps import current_agent, require_admin
+from app.api.deps import current_agent, require_permission
+from app.core.permissions import Permission
 from app.core.security import hash_password
+from app.db.base import utcnow
 from app.db.session import get_db
 from app.models import Agent, Area, BusinessHours, ContactReason, FaqEntry, Holiday
-from app.models.enums import AgentRole
+from app.models.enums import AccountTokenPurpose, AgentRole
 from app.schemas import (
     ORM,
+    AccessOut,
+    AgentCreated,
     AgentIn,
     AgentOut,
     AgentPatch,
@@ -28,8 +32,13 @@ from app.schemas import (
     ReasonPatch,
 )
 from app.schemas.metrics import HolidayIn, HolidayOut, ScheduleIn, ScheduleOut, Slot
+from app.services import accounts
 
-router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
+router = APIRouter(
+    prefix="/admin",
+    tags=["admin"],
+    dependencies=[Depends(require_permission(Permission.CATALOG_MANAGE))],
+)
 catalog_router = APIRouter(prefix="/catalog", tags=["catalog"])
 
 
@@ -162,24 +171,55 @@ def patch_faq(faq_id: int, body: FaqPatch, db: Session = Depends(get_db)):
 
 
 @router.get("/agents", response_model=list[AgentOut])
-def list_agents(db: Session = Depends(get_db)):
+def list_agents(
+    _: Agent = Depends(require_permission(Permission.USERS_MANAGE)),
+    db: Session = Depends(get_db),
+):
     return db.scalars(select(Agent).order_by(Agent.name)).all()
 
 
-@router.post("/agents", response_model=AgentOut, status_code=201)
-def create_agent(body: AgentIn, db: Session = Depends(get_db)):
+@router.post("/agents", response_model=AgentCreated, status_code=201)
+def create_agent(
+    body: AgentIn,
+    me: Agent = Depends(require_permission(Permission.USERS_MANAGE)),
+    db: Session = Depends(get_db),
+) -> AgentCreated:
+    """Crea la cuenta y envía la invitación por correo: el administrador no conoce la contraseña."""
     data = body.model_dump(exclude={"password"})
     data["email"] = data["email"].lower()
-    agent = Agent(**data, password_hash=hash_password(body.password))
+    if body.password:
+        agent = Agent(**data, password_hash=hash_password(body.password), password_set_at=utcnow())
+    else:
+        agent = Agent(**data, password_hash=accounts.unusable_password())
     db.add(agent)
-    return _save(db, agent)
+    _save(db, agent)
+    access = None
+    if not body.password:
+        access = accounts.send_access(db, agent, me, AccountTokenPurpose.INVITE)
+        db.refresh(agent)
+    return AgentCreated(
+        agent=AgentOut.model_validate(agent),
+        access=AccessOut(**access.__dict__) if access else None,
+    )
+
+
+@router.post("/agents/{agent_id}/send-access", response_model=AccessOut)
+def send_access(
+    agent_id: int,
+    me: Agent = Depends(require_permission(Permission.USERS_MANAGE)),
+    db: Session = Depends(get_db),
+) -> AccessOut:
+    """Reenvía la invitación o, si ya tiene contraseña, un enlace para restablecerla."""
+    agent = _get(db, Agent, agent_id)
+    result = accounts.send_access(db, agent, me, accounts.invite_purpose(agent))
+    return AccessOut(**result.__dict__)
 
 
 @router.patch("/agents/{agent_id}", response_model=AgentOut)
 def patch_agent(
     agent_id: int,
     body: AgentPatch,
-    me: Agent = Depends(require_admin),
+    me: Agent = Depends(require_permission(Permission.USERS_MANAGE)),
     db: Session = Depends(get_db),
 ):
     agent = _get(db, Agent, agent_id)
@@ -190,7 +230,7 @@ def patch_agent(
         # Evita que el centro se quede sin administrador por un toque equivocado.
         raise HTTPException(status.HTTP_409_CONFLICT, "No puede quitarse sus propios permisos")
     if password := changes.pop("password", None):
-        agent.password_hash = hash_password(password)
+        accounts.set_password(agent, password)
     for key, value in changes.items():
         setattr(agent, key, value)
     return _save(db, agent)

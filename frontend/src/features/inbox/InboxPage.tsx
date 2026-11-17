@@ -6,6 +6,7 @@ import { useConversation, useHealth, useMe } from "@/api/hooks";
 import type { InboxFilter } from "@/api/types";
 import { Button } from "@/components/ui/Button";
 import { NotificationBell } from "@/features/notifications/NotificationCenter";
+import { useCan } from "../auth/permissions";
 import { ChatView } from "./ChatView";
 import { permissionsFor } from "./permissions";
 import { ConversationList } from "./ConversationList";
@@ -18,6 +19,7 @@ export function InboxPage() {
   const params = useParams();
   const [search, setSearch] = useSearchParams();
   const me = useMe();
+  const can = useCan();
   const health = useHealth();
   const [showInspector, setShowInspector] = useState(false);
   const [simulator, setSimulator] = useState(false);
@@ -27,7 +29,7 @@ export function InboxPage() {
   const filter: InboxFilter = raw && FILTERS.includes(raw) ? raw : "open";
   const conversation = useConversation(selectedId);
   const canSimulate =
-    me.data?.role !== "agent" && health.data && health.data.environment !== "production";
+    can("simulator.use") && health.data && health.data.environment !== "production";
 
   return (
     <div className="grid h-full min-h-0 grid-cols-[minmax(0,1fr)] gap-3 p-2 md:p-0 lg:grid-cols-[22rem_minmax(0,1fr)] xl:grid-cols-[23rem_minmax(0,1fr)_22rem]">

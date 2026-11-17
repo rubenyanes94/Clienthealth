@@ -1,10 +1,10 @@
-import { Lock } from "lucide-react";
 import type { ReactNode } from "react";
-import { useLiveMetrics, useMe, useMetrics } from "@/api/hooks";
+import { useLiveMetrics, useMetrics } from "@/api/hooks";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Segmented } from "@/components/ui/Segmented";
 import { formatElapsed } from "@/lib/format";
 import { useNow } from "@/lib/useNow";
+import { RequirePermission } from "../auth/RequirePermission";
 import { CasePanels } from "./CasePanels";
 import { CsatLine, HourBars, ReasonBars } from "./charts";
 import { Filters } from "./Filters";
@@ -14,18 +14,14 @@ import { Card, StatTile } from "./parts";
 import { usePeriod, useView, type View } from "./usePeriod";
 
 export function SupervisorOnly({ children }: { children: ReactNode }) {
-  const me = useMe();
-  if (me.data?.role === "agent") {
-    return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-        <div className="flex size-14 items-center justify-center rounded-full bg-ink text-white">
-          <Lock className="size-5" aria-hidden />
-        </div>
-        <p className="text-sm text-ink-3">Los indicadores están disponibles para supervisores.</p>
-      </div>
-    );
-  }
-  return children;
+  return (
+    <RequirePermission
+      permission="metrics.view"
+      message="Los indicadores están disponibles para supervisores y administradores."
+    >
+      {children}
+    </RequirePermission>
+  );
 }
 
 function LiveStrip() {

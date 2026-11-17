@@ -227,6 +227,17 @@ export function useNotificationActions() {
   };
 }
 
+/** El chat del que nació un caso, en solo lectura. Se pide solo al abrirlo. */
+export function useCaseConversation(caseId: number) {
+  return useQuery({
+    queryKey: ["case-conversation", caseId],
+    queryFn: () =>
+      unwrap(
+        api.GET("/api/cases/{case_id}/conversation", { params: { path: { case_id: caseId } } }),
+      ),
+  });
+}
+
 export function useMyTasks() {
   return useQuery({
     queryKey: ["my-tasks"],
@@ -468,22 +479,66 @@ export function useUsers() {
   });
 }
 
-export function useSaveUser(id?: number) {
+/** Crea la cuenta y envía la invitación por correo. */
+export function useCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: AgentIn | AgentPatch) =>
-      id === undefined
-        ? unwrap(api.POST("/api/admin/agents", { body: body as AgentIn }))
-        : unwrap(
-            api.PATCH("/api/admin/agents/{agent_id}", {
-              params: { path: { agent_id: id } },
-              body: body as AgentPatch,
-            }),
-          ),
+    mutationFn: (body: AgentIn) => unwrap(api.POST("/api/admin/agents", { body })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["users"] }),
+  });
+}
+
+export function useSaveUser(id: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: AgentPatch) =>
+      unwrap(
+        api.PATCH("/api/admin/agents/{agent_id}", { params: { path: { agent_id: id } }, body }),
+      ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["users"] });
       await queryClient.invalidateQueries({ queryKey: keys.me });
     },
+  });
+}
+
+/** Reenvía la invitación o, si ya tiene contraseña, un enlace para restablecerla. */
+export function useSendAccess() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (agentId: number) =>
+      unwrap(
+        api.POST("/api/admin/agents/{agent_id}/send-access", {
+          params: { path: { agent_id: agentId } },
+        }),
+      ),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["users"] }),
+  });
+}
+
+export function useRequestReset() {
+  return useMutation({
+    mutationFn: (email: string) =>
+      unwrap(api.POST("/api/auth/password-reset/request", { body: { email } })),
+  });
+}
+
+/** Por POST: el enlace del correo nunca viaja en una URL que quede en registros. */
+export function useVerifyReset(token: string | null) {
+  return useQuery({
+    queryKey: ["password-reset", token],
+    enabled: token !== null,
+    retry: false,
+    queryFn: () => unwrap(api.POST("/api/auth/password-reset/verify", { body: { token: token! } })),
+  });
+}
+
+export function useConfirmReset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { token: string; new_password: string }) =>
+      unwrap(api.POST("/api/auth/password-reset/confirm", { body })),
+    onSuccess: (me) => queryClient.setQueryData(keys.me, me),
   });
 }
 

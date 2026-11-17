@@ -4,9 +4,9 @@ const DAY_MS = 24 * 3600_000;
 
 export function permissionsFor(
   conversation: ConversationDetail,
-  me: { id: number; role: string } | null | undefined,
+  me: { id: number; permissions: string[] } | null | undefined,
 ) {
-  const isSupervisor = me?.role !== "agent";
+  const isSupervisor = me?.permissions?.includes("conversations.all") ?? false;
   const isMine = conversation.assigned_agent?.id === me?.id;
   const canAct = isSupervisor || isMine;
   const active = conversation.status === "open" || conversation.status === "pending";

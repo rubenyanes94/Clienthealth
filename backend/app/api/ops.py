@@ -7,8 +7,9 @@ from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy import exists, func, select, text
 from sqlalchemy.orm import Session, aliased
 
-from app.api.deps import current_agent, require_supervisor
+from app.api.deps import current_agent, require_permission
 from app.core.config import get_settings
+from app.core.permissions import Permission
 from app.db.base import utcnow
 from app.db.session import get_db
 from app.models import Agent, Conversation, ConversationEvent
@@ -122,7 +123,7 @@ def daily_rollup(
 @router.post("/dev/simulate-inbound", status_code=202)
 def simulate_inbound(
     body: SimulateInboundIn,
-    _: Agent = Depends(require_supervisor),
+    _: Agent = Depends(require_permission(Permission.SIMULATOR_USE)),
     db: Session = Depends(get_db),
 ) -> dict[str, str]:
     """Inyecta un mensaje entrante con el mismo formato que Meta. Deshabilitado en producción."""

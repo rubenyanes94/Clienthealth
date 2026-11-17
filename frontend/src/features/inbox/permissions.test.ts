@@ -29,19 +29,22 @@ function conversation(overrides: Partial<ConversationDetail> = {}): Conversation
 
 describe("permissionsFor", () => {
   it("permite responder al agente asignado dentro de la ventana", () => {
-    const p = permissionsFor(conversation(), { id: 7, role: "agent" });
+    const p = permissionsFor(conversation(), { id: 7, permissions: ["conversations.area"] });
     expect(p.canReply).toBe(true);
   });
 
   it("bloquea a otro agente", () => {
-    const p = permissionsFor(conversation(), { id: 8, role: "agent" });
+    const p = permissionsFor(conversation(), { id: 8, permissions: ["conversations.area"] });
     expect(p.canReply).toBe(false);
     expect(p.blockedReason).toMatch(/otro agente/);
   });
 
   it("bloquea fuera de la ventana de 24 h", () => {
     const old = new Date(Date.now() - 25 * 3600_000).toISOString();
-    const p = permissionsFor(conversation({ last_inbound_at: old }), { id: 7, role: "agent" });
+    const p = permissionsFor(conversation({ last_inbound_at: old }), {
+      id: 7,
+      permissions: ["conversations.area"],
+    });
     expect(p.canReply).toBe(false);
     expect(p.blockedReason).toMatch(/24 h/);
   });
@@ -49,8 +52,21 @@ describe("permissionsFor", () => {
   it("pide aceptar los casos en cola", () => {
     const p = permissionsFor(conversation({ status: "queued", assigned_agent: null }), {
       id: 7,
-      role: "agent",
+      permissions: ["conversations.area"],
     });
     expect(p.blockedReason).toMatch(/Acepte/);
+  });
+
+  it("deja actuar a quien ve todos los chats aunque no sea el asignado", () => {
+    const p = permissionsFor(conversation(), {
+      id: 8,
+      permissions: ["conversations.area", "conversations.all"],
+    });
+    expect(p.canAct).toBe(true);
+    expect(p.canReply).toBe(true);
+  });
+
+  it("sin sesión no deja actuar", () => {
+    expect(permissionsFor(conversation(), null).canAct).toBe(false);
   });
 });

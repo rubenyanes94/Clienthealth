@@ -9,10 +9,11 @@ from app.models.enums import (
     CaseStage,
     CaseTaskStatus,
     CaseTaskType,
+    ConversationStatus,
     PatientEventType,
     Priority,
 )
-from app.schemas import ORM, AgentRef, AreaRef, CaseBrief, PatientRef, ReasonRef
+from app.schemas import ORM, AgentRef, AreaRef, CaseBrief, MessageOut, PatientRef, ReasonRef
 
 
 def normalize_national_id(value: str) -> str:
@@ -194,6 +195,18 @@ class CaseDetail(CaseSummary):
     next_stages: list[CaseStage]
     # Si el agente no puede abrir la conversación vinculada, no se ofrece el enlace.
     can_view_conversation: bool = False
+
+
+class CaseConversation(BaseModel):
+    """El chat del que nació el caso, en solo lectura: es parte de su historia."""
+
+    id: int
+    status: ConversationStatus
+    area: AreaRef | None
+    contact_name: str | None
+    opened_at: datetime
+    closed_at: datetime | None
+    messages: list[MessageOut]
 
 
 class MyTaskCase(ORM):

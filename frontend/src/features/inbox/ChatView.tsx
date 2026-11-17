@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { dayKey, displayPhone, formatDay } from "@/lib/format";
+import { useCan } from "../auth/permissions";
 import { NewCaseDialog } from "../cases/NewCaseDialog";
 import { StatusPill, UrgentPill } from "./bits";
 import { contactName, permissionsFor } from "./permissions";
@@ -23,6 +24,7 @@ export function ChatView({
   onToggleInspector: () => void;
 }) {
   const me = useMe();
+  const can = useCan();
   const toast = useToast();
   const { simple } = useConversationActions(conversation.id);
   const scroller = useRef<HTMLDivElement>(null);
@@ -30,8 +32,7 @@ export function ChatView({
   const perms = permissionsFor(conversation, me.data);
   const lastId = conversation.messages.at(-1)?.id;
   const canAccept =
-    conversation.status === "queued" ||
-    (conversation.status === "bot" && me.data?.role !== "agent");
+    conversation.status === "queued" || (conversation.status === "bot" && can("conversations.all"));
 
   useEffect(() => {
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight });

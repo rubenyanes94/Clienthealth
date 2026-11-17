@@ -3,7 +3,9 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
+from app.core.permissions import Permission
 from app.models.enums import (
+    AccountTokenPurpose,
     AgentRole,
     CaseStage,
     ConversationStatus,
@@ -27,6 +29,33 @@ class ORM(BaseModel):
 class LoginIn(BaseModel):
     email: str = Field(min_length=3, max_length=255)
     password: str = Field(min_length=1, max_length=200)
+
+
+class AccessOut(BaseModel):
+    """Resultado de enviar un enlace de acceso por correo."""
+
+    email_sent: bool
+    dry_run: bool
+    error: str | None
+    link_path: str | None  # solo fuera de producción y sin servidor de correo
+
+
+class ResetRequestIn(BaseModel):
+    email: str = Field(min_length=3, max_length=255)
+
+
+class ResetTokenIn(BaseModel):
+    token: str = Field(min_length=20, max_length=200)
+
+
+class ResetConfirmIn(ResetTokenIn):
+    new_password: str = Field(min_length=10, max_length=200)
+
+
+class ResetTokenOut(BaseModel):
+    purpose: AccountTokenPurpose
+    name: str
+    email: str
 
 
 class PasswordChangeIn(BaseModel):
@@ -110,12 +139,25 @@ class AgentOut(ORM):
     area_id: int | None
     is_active: bool
     last_seen_at: datetime | None
+    password_set_at: datetime | None  # vacío = invitación pendiente
+
+
+class AgentCreated(BaseModel):
+    agent: AgentOut
+    access: AccessOut | None  # None si el administrador fijó la contraseña
+
+
+class MeOut(AgentOut):
+    """La sesión: los datos de la persona y lo que su rol le permite hacer."""
+
+    permissions: list[Permission]
 
 
 class AgentIn(BaseModel):
     name: str = Field(min_length=2, max_length=120)
     email: EmailStr
-    password: str = Field(min_length=10, max_length=200)
+    # Sin contraseña (lo normal): la persona recibe un correo para crearla ella misma.
+    password: str | None = Field(default=None, min_length=10, max_length=200)
     role: AgentRole = AgentRole.AGENT
     area_id: int | None = None
 

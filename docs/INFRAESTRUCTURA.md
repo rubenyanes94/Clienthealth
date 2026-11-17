@@ -160,7 +160,9 @@ transacción. Sin evento, la acción no cuenta en los indicadores.
 |---|---|
 | `GET /health` | Salud + verificación de la conexión a la base |
 | `POST /auth/login` · `POST /auth/logout` · `GET /auth/me` | Sesión por cookie httpOnly |
-| `POST /auth/password` | Cada persona cambia su propia contraseña |
+| `POST /auth/password` | Cada persona cambia su propia contraseña (cierra sus demás sesiones) |
+| `POST /auth/password-reset/request` · `/verify` · `/confirm` | «¿Olvidó su contraseña?» y crear la contraseña desde el enlace del correo (públicas) |
+| `POST /admin/agents` · `POST /admin/agents/{id}/send-access` | Crear una cuenta y enviar la invitación; reenviarla o enviar un enlace para restablecer |
 | `GET /inbox?filter=&cursor=` | Bandeja (`open`, `queue`, `mine`, `pending`, `closed`, `bot`, `all`) |
 | `GET /inbox/changes?since=<iso>` | Polling: IDs de conversaciones con cambios desde `since` |
 | `GET /conversations/{id}` | Detalle + mensajes + eventos |
@@ -178,6 +180,7 @@ transacción. Sin evento, la acción no cuenta en los indicadores.
 | `POST /cases/{id}/tasks` · `/tasks/{id}/complete` · `/tasks/{id}/cancel` · `GET /cases/tasks/mine` | Tareas del caso y las pendientes de quien tiene la sesión |
 | `POST /cases/{id}/assign` | Poner un caso a cargo de una persona de cualquier área (le llega una notificación) |
 | `GET /notifications` · `POST /notifications/{id}/read` · `/notifications/read-all` | Centro de notificaciones de quien tiene la sesión |
+| `GET /cases/{id}/conversation` | El chat del que nació el caso, en solo lectura, para quien puede ver el caso |
 | `GET /cases/live` | Situación de la sala: conteos y tiempos, sin datos de pacientes |
 | `PUT /contacts/{id}/consent` | Registrar o retirar el consentimiento para mensajes proactivos (NPS) |
 | `GET /metrics/overview?from=&to=&area_id=` · `/by-hour` · `/by-agent` · `/by-area` · `/reasons` · `/csat-daily` | Paneles (supervisor). Definiciones en `docs/METRICAS.md` |
@@ -340,6 +343,10 @@ Los endpoints `/api/cron/*` exigen `Authorization: Bearer ${CRON_SECRET}` y son 
 | `GEMINI_API_KEY` | Manual | |
 | `GEMINI_MODEL` | Opcional | Por defecto `gemini-2.5-flash` |
 | `CRON_SECRET` | Manual | Vercel lo envía como Bearer a los crons |
+| `APP_BASE_URL` | Manual | Dirección pública de la web, para los enlaces de los correos (ej. `https://consola.cmsb.com`) |
+| `SMTP_HOST` · `SMTP_PORT` · `SMTP_USER` · `SMTP_PASSWORD` · `SMTP_STARTTLS` | Manual (secreto) | Servidor de correo. Vacío = no se envía; en producción la invitación avisa del fallo |
+| `EMAIL_FROM` | Manual | Remitente, de un dominio verificado en el proveedor |
+| `INVITE_EXPIRE_HOURS` · `RESET_EXPIRE_MINUTES` | Opcional | Vigencia de los enlaces: 72 h para invitar, 60 min para restablecer |
 | `TIMEZONE` | Opcional | `America/Caracas` |
 
 En local: `vercel env pull .env` o copiar `.env.example`. **Nunca** se suben `.env` al repo.
@@ -380,6 +387,10 @@ Las conversaciones contienen datos de salud, así que estas reglas aplican a tod
 - **Logs**: prohibido registrar el texto de los mensajes, teléfonos, cédulas o diagnósticos. Solo se
   loguean IDs internos y tipos de evento.
 - `ConversationEvent.data` nunca contiene texto del paciente (hay una prueba que lo verifica).
+- **Permisología**: la matriz de permisos por rol vive solo en `app/core/permissions.py`. El servidor
+  la aplica en cada ruta con `require_permission(...)` y la envía en `/auth/me` (`permissions`), para
+  que la interfaz muestre solo lo que cada quien puede usar (`useCan`). Una prueba recorre todas las
+  rutas y exige sesión en cada una, salvo las públicas listadas a propósito.
 - **Roles**: en las conversaciones, `agent` ve la cola de su área y sus casos; `supervisor` ve todo
   (incluidas las conversaciones del bot) y los paneles; `admin` además gestiona catálogos y agentes.
   Los pacientes y los casos del módulo de Casos los ven y gestionan **todas las áreas** (decisión del
@@ -388,6 +399,12 @@ Las conversaciones contienen datos de salud, así que estas reglas aplican a tod
   (`agent_id` en `conversation_events`, `case_events` y `patient_events`). Se administran en
   `/usuarios` (rol admin) y cada quien cambia su contraseña en «Mi cuenta». Un admin no puede
   quitarse sus propios permisos.
+- **Cuentas por invitación**: el administrador crea la cuenta sin contraseña y la persona recibe un
+  enlace para crearla; nadie más la conoce. Los enlaces son de un solo uso, vencen (72 h / 60 min),
+  van después de `#` (no llegan a ningún servidor ni a los registros) y en la base solo se guarda su
+  SHA-256. Pedir uno nuevo invalida el anterior. «¿Olvidó su contraseña?» responde igual exista o no
+  el correo y no reenvía más de uno por minuto. Al crear o cambiar la contraseña se cierran las demás
+  sesiones (`agents.session_version` viaja en la sesión).
 - **Búsquedas por POST**: `q` puede llevar un nombre o una cédula; en la URL quedaría en los logs de
   acceso. Por eso `/patients/search` y `/cases/search` no son `GET`.
 - `CaseEvent.data` tampoco contiene texto del paciente: las notas viven en `case_notes` y el evento
@@ -474,6 +491,7 @@ Cada fase termina con sus pruebas en verde y un deploy de preview funcionando.
 - Textos de las preguntas frecuentes del bot (el horario del seed es un marcador provisional).
 - Número de WhatsApp Business, verificación del negocio en Meta y plantillas (CSAT, NPS, reapertura).
 - Canales de la fase 1: ¿solo WhatsApp, o también Instagram y web?
+- Proveedor de correo (SMTP) y dominio remitente verificado, para las invitaciones.
 - Valor de la meta del módulo de Casos: una sola para todas las áreas, 15 min de forma provisional
   (`CASE_GOAL_MINUTES`).
 - Plan de Vercel (Pro para producción) y región de la base de Neon (la más cercana: `us-east`).
@@ -542,8 +560,13 @@ Diferencias con la versión original de este documento y su motivo:
 4. **Paneles e informes**: solo supervisores y admin (el backend responde 403 a los agentes y el menú
    los oculta). Los informes se exportan en CSV con `;`, coma decimal y BOM, para abrirlos directo en
    Excel en español. La exportación `.xlsx` sigue en la fase 4.
-5. **Datos de demostración**: `python -m scripts.demo_data` genera 14 días de actividad ficticia para
-   ver los paneles en desarrollo (`--purge` la borra). Se niega a correr en producción.
+5. **Datos de demostración**: `python -m scripts.demo_data` genera 14 días de actividad ficticia
+   (chats de WhatsApp, pacientes, casos entre áreas con transferencias, esperas, notas y tareas) y un
+   estado «en vivo» relativo a la hora en que se corre: casos por atender (algunos fuera de meta),
+   tareas pendientes y avisos sin leer para el administrador. Como el estado «en vivo» envejece, hay
+   que volver a correrlo justo antes de una demostración. Los datos propios se reconocen por el
+   `wa_id` que empieza por 5899 y por el correo `@demo.example.com`, y `--purge` borra solo eso. Se
+   niega a correr en producción. El personal de demostración entra con la clave `demo-clave-123`.
 6. **Contactos**: la pantalla `/contactos` pasa a la fase 4.
 
 ---
@@ -592,3 +615,13 @@ Diferencias con la versión original de este documento y su motivo:
     muestra las 30 más recientes y no hay borrado ni purga automática.
 13. **Asignar un caso** (`POST /cases/{id}/assign`) es distinto de «Tomar caso»: lo hace otra persona
     sobre alguien (de cualquier área), registra el evento `ASSIGNED` y notifica. No cambia la etapa.
+14. **Permisos de los empleados** (rol `agent`): crean y gestionan casos, asignan tareas y casos a
+    cualquier persona, registran pacientes, atienden los chats de su área y ven la historia completa
+    de cualquier caso, **incluido el chat del que nació aunque sea de otra área**, en solo lectura
+    (`GET /cases/{id}/conversation`). Responder o anotar en ese chat sigue las reglas de Conversaciones.
+    No acceden a Paneles, Informes, Usuarios, catálogos ni al simulador.
+15. **Correo**: `services/email.py` envía por SMTP (biblioteca estándar, sin dependencias), dentro de
+    la petición y con 10 s de límite. Sin `SMTP_HOST` no envía: fuera de producción la respuesta trae
+    el enlace para que el administrador lo comparta en pruebas; en producción se informa el error y se
+    puede reenviar. La cuenta se crea aunque el correo falle. Nunca se loguean enlaces ni contenidos.
+    Pendiente (§16): elegir proveedor y verificar el dominio remitente (SPF/DKIM).
