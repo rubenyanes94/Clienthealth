@@ -12,3 +12,6 @@ node_modules/
 dist/
 *.tsbuildinfo
 .DS_Store
+
+# Páginas guardadas del sitio del centro (traen datos de contacto de médicos): nunca al repo
+.muestras/

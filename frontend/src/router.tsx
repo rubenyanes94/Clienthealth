@@ -10,6 +10,8 @@ import { ConversationLogPage } from "./features/inbox/ConversationLogPage";
 import { InboxPage } from "./features/inbox/InboxPage";
 import { PatientDetailPage } from "./features/patients/PatientDetailPage";
 import { PatientsPage } from "./features/patients/PatientsPage";
+import { RequirePermission } from "./features/auth/RequirePermission";
+import { DirectoryPage } from "./features/directory/DirectoryPage";
 import { UsersPage } from "./features/users/UsersPage";
 import { LazyPanelsPage, LazyReportsPage } from "./features/metrics/lazy";
 
@@ -40,6 +42,17 @@ export const router = createBrowserRouter([
       },
       { path: "pacientes", element: <PatientsPage /> },
       { path: "pacientes/:id", element: <PatientDetailPage /> },
+      {
+        path: "directorio",
+        element: (
+          <RequirePermission
+            permission="directory.view"
+            message="El directorio no está disponible para su cuenta."
+          >
+            <DirectoryPage />
+          </RequirePermission>
+        ),
+      },
       { path: "usuarios", element: <UsersPage /> },
       { path: "contactos", element: <Navigate to="/pacientes" replace /> },
       { path: "*", element: <Navigate to="/casos" replace /> },

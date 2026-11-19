@@ -19,6 +19,9 @@ class Permission(StrEnum):
     CONVERSATIONS_AREA = "conversations.area"  # la cola de su área y sus propios chats
     CONVERSATIONS_ALL = "conversations.all"  # todos los chats, incluidos los del bot
     SIMULATOR_USE = "simulator.use"  # inyectar mensajes de prueba (nunca en producción)
+    # Directorio de médicos y consultorios (información pública de la web del centro).
+    DIRECTORY_VIEW = "directory.view"
+    DIRECTORY_MANAGE = "directory.manage"  # actualizarlo desde la web
     # Gestión.
     METRICS_VIEW = "metrics.view"  # Paneles e Informes
     USERS_MANAGE = "users.manage"  # crear, editar y desactivar cuentas
@@ -32,6 +35,7 @@ EMPLOYEE = frozenset(
         Permission.TASKS_ASSIGN,
         Permission.PATIENTS_MANAGE,
         Permission.CONVERSATIONS_AREA,
+        Permission.DIRECTORY_VIEW,
     }
 )
 

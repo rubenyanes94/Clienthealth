@@ -15,6 +15,7 @@ el personal de las áreas que la usa a diario, sobre todo en tableta.
 4. [Tareas de un caso](#4-tareas-de-un-caso)
 5. [Pacientes](#5-pacientes)
 6. [Conversaciones (WhatsApp)](#6-conversaciones-whatsapp)
+   - [Directorio de consultorios](#6b-directorio-de-consultorios)
 7. [Notificaciones](#7-notificaciones)
 8. [Paneles](#8-paneles)
 9. [Informes](#9-informes)
@@ -96,6 +97,7 @@ Está a la izquierda (en el teléfono, abajo). Cada sección es un icono con su 
 | **Casos** | Gestionar requerimientos entre áreas y ver la sala | Todos |
 | **Conversaciones** | Atender los chats de WhatsApp | Todos |
 | **Pacientes** | Registrar y buscar pacientes | Todos |
+| **Directorio** | Encontrar dónde queda el consultorio de cada médico | Todos |
 | **Paneles** | Ver indicadores | Supervisor y administrador |
 | **Informes** | Descargar tablas en CSV | Supervisor y administrador |
 | **Usuarios** | Crear y gestionar cuentas | Administrador |
@@ -431,6 +433,42 @@ cómo reacciona la consola. Lo ven supervisores y administradores.
 
 ---
 
+## 6b. Directorio de consultorios
+
+Sirve para responder rápido «¿dónde queda el consultorio del doctor…?». Los datos vienen de la web
+del centro.
+
+### Buscar
+
+1. Pulse **Directorio** en el menú.
+2. Escriba en el buscador: el **nombre** del médico, una **especialidad** («cardio») o un
+   **consultorio** («anexo b 5»). No hace falta escribir tildes ni mayúsculas.
+3. Si hace falta, filtre por **edificio** (Anexo A, Anexo B…) o por **especialidad**.
+
+Cada ficha muestra en grande **el edificio, el piso y el consultorio**, y debajo el horario, si
+atiende con **previa cita**, los teléfonos (tóquelos para llamar) y los correos.
+
+- **«Revisar datos»:** la web trae esa ficha incompleta o escrita de forma poco clara. Pulse **Ver la
+  ficha original** para leer el texto tal como está en la web.
+- **En la web:** abre la ficha en el sitio del centro.
+
+### Actualizar (solo administradores)
+
+1. Pulse **Actualizar** y luego **Traer desde la web**. Debe hacerlo desde una conexión en Venezuela:
+   la web del centro no responde desde el exterior.
+2. Revise la **vista previa**: médicos nuevos, con cambios, sin cambios, los que ya no están en la web
+   y las fichas para revisar.
+3. Pulse **Aplicar cambios**.
+
+Si **Traer desde la web** no funciona, use el **plan B** que aparece en la misma ventana: copie el
+script, péguelo en la consola del navegador (F12) estando en la web del centro, y luego suba el
+archivo «directorio.json» con **Importar archivo**.
+
+Si la descarga trae muchos menos médicos que los actuales, la consola no retira a nadie y pide
+repetirla: probablemente se cortó.
+
+---
+
 ## 7. Notificaciones
 
 Avisan cuando alguien le **asigna una tarea** o un **caso**.
@@ -585,6 +623,7 @@ La columna **Última actividad** muestra cuándo estuvo conectada cada persona.
 | No puedo editar, asignar ni crear tareas | El caso está **cerrado**. Pulse **Reabrir caso** |
 | *«Ya existe un paciente con esa cédula»* | El paciente ya está registrado: búsquelo en **Pacientes** |
 | *«El enlace no es válido o ya venció»* | Los enlaces del correo sirven una vez y vencen (72 h la invitación, 1 h el restablecimiento). Pida otro con **¿Olvidó su contraseña?** o al administrador |
+| En el Directorio, «La web del centro no respondió» | La web del centro solo responde desde Venezuela, o está caída. Use el plan B de la misma ventana |
 | Me sacó de la sesión sin tocar nada | Alguien cambió o restableció su contraseña, y eso cierra las sesiones abiertas. Entre con la contraseña nueva |
 | *«Escríbalo así: 4141234567»* | El teléfono no tiene el formato correcto. Escriba 10 dígitos, sin el 0 inicial |
 | No puedo responder en un chat | Primero **acepte** el caso, o pasaron más de 24 horas del último mensaje del paciente |

@@ -10,6 +10,8 @@ export const PERMISSION_LABEL: Record<Permission, string> = {
   "conversations.area": "Atender los chats de WhatsApp de su área",
   "conversations.all": "Ver todos los chats, incluidos los del bot",
   "simulator.use": "Simular mensajes de prueba (fuera de producción)",
+  "directory.view": "Consultar el directorio de médicos y consultorios",
+  "directory.manage": "Actualizar el directorio desde la web del centro",
   "metrics.view": "Ver Paneles e Informes",
   "users.manage": "Crear y gestionar cuentas de usuario",
   "catalog.manage": "Configurar áreas, motivos, preguntas del bot y horarios",

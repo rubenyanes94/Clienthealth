@@ -61,6 +61,7 @@ def test_matrix():
         Permission.TASKS_ASSIGN,
         Permission.PATIENTS_MANAGE,
         Permission.CONVERSATIONS_AREA,
+        Permission.DIRECTORY_VIEW,
     ):
         assert permission in employee
     for permission in (
@@ -69,6 +70,7 @@ def test_matrix():
         Permission.CATALOG_MANAGE,
         Permission.CONVERSATIONS_ALL,
         Permission.SIMULATOR_USE,
+        Permission.DIRECTORY_MANAGE,
     ):
         assert permission not in employee
     supervisor = ROLE_PERMISSIONS[AgentRole.SUPERVISOR]
