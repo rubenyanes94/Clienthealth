@@ -796,6 +796,47 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/directory": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List Directory
+     * @description Todo el directorio de una vez (unos cientos de fichas): la búsqueda es instantánea en la
+     *     tableta, sin pedir nada al servidor por cada letra que se escribe.
+     */
+    get: operations["list_directory_api_directory_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/directory/import": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Import Directory
+     * @description Sin `apply`, solo muestra qué cambiaría. Con `apply=true`, lo guarda.
+     */
+    post: operations["import_directory_api_directory_import_post"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/metrics/overview": {
     parameters: {
       query?: never;
@@ -2021,6 +2062,55 @@ export interface components {
       avg: number | null;
       satisfied: components["schemas"]["Ratio"];
     };
+    /** DirectoryDoctorOut */
+    DirectoryDoctorOut: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string;
+      /** Display Name */
+      display_name: string;
+      /** Specialties */
+      specialties: string[];
+      /** Specialty Text */
+      specialty_text: string | null;
+      /** Offices */
+      offices: components["schemas"]["OfficeOut"][];
+      /** Schedule */
+      schedule: string[];
+      /** By Appointment */
+      by_appointment: boolean;
+      /** Phones */
+      phones: components["schemas"]["PhoneOut"][];
+      /** Emails */
+      emails: string[];
+      /** Raw Lines */
+      raw_lines: string[];
+      /** Review Notes */
+      review_notes: string[];
+      /** Source Url */
+      source_url: string;
+      /** Search Text */
+      search_text: string;
+    };
+    /** DirectoryImportOut */
+    DirectoryImportOut: {
+      /**
+       * Created At
+       * Format: date-time
+       */
+      created_at: string;
+      /** Agent Name */
+      agent_name: string | null;
+      /** Total */
+      total: number;
+    };
+    /** DirectoryOut */
+    DirectoryOut: {
+      /** Doctors */
+      doctors: components["schemas"]["DirectoryDoctorOut"][];
+      last_import: components["schemas"]["DirectoryImportOut"] | null;
+    };
     /**
      * Durations
      * @description Minutos hábiles.
@@ -2170,6 +2260,40 @@ export interface components {
       /** First Response Median */
       first_response_median: number | null;
       sla: components["schemas"]["Ratio"];
+    };
+    /** ImportChange */
+    ImportChange: {
+      /** Name */
+      name: string;
+      /**
+       * Notes
+       * @default []
+       */
+      notes: string[];
+    };
+    /**
+     * ImportPreview
+     * @description Lo que haría la importación. Con `apply` además queda guardado.
+     */
+    ImportPreview: {
+      /** Applied */
+      applied: boolean;
+      /** Total */
+      total: number;
+      /** Created */
+      created: number;
+      /** Updated */
+      updated: number;
+      /** Unchanged */
+      unchanged: number;
+      /** Removed */
+      removed: number;
+      /** Needs Review */
+      needs_review: components["schemas"]["ImportChange"][];
+      /** Removed Names */
+      removed_names: string[];
+      /** Skipped Posts */
+      skipped_posts: number;
     };
     /** InboxChanges */
     InboxChanges: {
@@ -2355,6 +2479,17 @@ export interface components {
       detractors: number;
       /** Score */
       score: number | null;
+    };
+    /** OfficeOut */
+    OfficeOut: {
+      /** Building */
+      building: string | null;
+      /** Floor */
+      floor: string | null;
+      /** Office */
+      office: string | null;
+      /** Text */
+      text: string;
     };
     /** OverviewOut */
     OverviewOut: {
@@ -2542,9 +2677,22 @@ export interface components {
       | "conversations.area"
       | "conversations.all"
       | "simulator.use"
+      | "directory.view"
+      | "directory.manage"
       | "metrics.view"
       | "users.manage"
       | "catalog.manage";
+    /** PhoneOut */
+    PhoneOut: {
+      /** Label */
+      label: string;
+      /** Number */
+      number: string;
+      /** Display */
+      display: string;
+      /** Mobile */
+      mobile: boolean;
+    };
     /**
      * Priority
      * @enum {string}
@@ -2726,6 +2874,58 @@ export interface components {
       input?: unknown;
       /** Context */
       ctx?: Record<string, never>;
+    };
+    /**
+     * WpExport
+     * @description El archivo que arma el navegador (o el script) a partir de la web del centro.
+     */
+    WpExport: {
+      /** Posts */
+      posts: components["schemas"]["WpPost"][];
+      /** Categories */
+      categories?: components["schemas"]["WpTerm"][];
+      /** Tags */
+      tags?: components["schemas"]["WpTerm"][];
+    };
+    /** WpPost */
+    WpPost: {
+      /** Id */
+      id: number;
+      /**
+       * Link
+       * @default
+       */
+      link: string;
+      /** Modified */
+      modified?: string | null;
+      title: components["schemas"]["WpRendered"];
+      content: components["schemas"]["WpRendered"];
+      /** Categories */
+      categories?: number[];
+      /** Tags */
+      tags?: number[];
+      /** Class List */
+      class_list?: string[];
+    };
+    /** WpRendered */
+    WpRendered: {
+      /**
+       * Rendered
+       * @default
+       */
+      rendered: string;
+    };
+    /** WpTerm */
+    WpTerm: {
+      /** Id */
+      id: number;
+      /** Name */
+      name: string;
+      /**
+       * Slug
+       * @default
+       */
+      slug: string;
     };
   };
   responses: never;
@@ -4157,6 +4357,61 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  list_directory_api_directory_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["DirectoryOut"];
+        };
+      };
+    };
+  };
+  import_directory_api_directory_import_post: {
+    parameters: {
+      query?: {
+        apply?: boolean;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["WpExport"];
+      };
+    };
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ImportPreview"];
+        };
       };
       /** @description Validation Error */
       422: {

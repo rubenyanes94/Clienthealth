@@ -181,6 +181,7 @@ transacción. Sin evento, la acción no cuenta en los indicadores.
 | `POST /cases/{id}/assign` | Poner un caso a cargo de una persona de cualquier área (le llega una notificación) |
 | `GET /notifications` · `POST /notifications/{id}/read` · `/notifications/read-all` | Centro de notificaciones de quien tiene la sesión |
 | `GET /cases/{id}/conversation` | El chat del que nació el caso, en solo lectura, para quien puede ver el caso |
+| `GET /directory` · `POST /directory/import?apply=` | Directorio de consultorios: todo el listado; importar desde la web del centro (vista previa y aplicar) |
 | `GET /cases/live` | Situación de la sala: conteos y tiempos, sin datos de pacientes |
 | `PUT /contacts/{id}/consent` | Registrar o retirar el consentimiento para mensajes proactivos (NPS) |
 | `GET /metrics/overview?from=&to=&area_id=` · `/by-hour` · `/by-agent` · `/by-area` · `/reasons` · `/csat-daily` | Paneles (supervisor). Definiciones en `docs/METRICAS.md` |
@@ -625,3 +626,13 @@ Diferencias con la versión original de este documento y su motivo:
     el enlace para que el administrador lo comparta en pruebas; en producción se informa el error y se
     puede reenviar. La cuenta se crea aunque el correo falle. Nunca se loguean enlaces ni contenidos.
     Pendiente (§16): elegir proveedor y verificar el dominio remitente (SPF/DKIM).
+16. **Directorio de consultorios** (`directory_doctors`, `directory_imports`): fichas públicas de los
+    médicos de la web del centro (WordPress, entradas con etiqueta de una letra A–Z; especialidades =
+    categorías). Esa web **solo responde desde Venezuela**, así que el servidor nunca la consulta: el
+    **navegador** de quien actualiza lee su interfaz de datos (`?rest_route=/wp/v2/posts`, por eso
+    `connect-src` del CSP la autoriza) y envía el resultado a `POST /directory/import`. Si el
+    navegador no puede, hay un plan B: un script que se pega en la consola de la propia web y descarga
+    `directorio.json`. `services/directory_parser.py` interpreta el texto libre (edificio, piso,
+    consultorio, horario, teléfonos, correos), conserva las líneas originales y marca para revisar lo
+    que no entiende. La importación muestra antes qué cambia y no retira fichas si trae menos de la
+    mitad de las actuales (descarga cortada). Ver: todos; actualizar: administradores.

@@ -10,6 +10,7 @@ import type {
   InboxFilter,
   PatientIn,
   Priority,
+  WpExport,
 } from "./types";
 
 export const keys = {
@@ -235,6 +236,26 @@ export function useCaseConversation(caseId: number) {
       unwrap(
         api.GET("/api/cases/{case_id}/conversation", { params: { path: { case_id: caseId } } }),
       ),
+  });
+}
+
+export function useDirectory() {
+  return useQuery({
+    queryKey: ["directory"],
+    queryFn: () => unwrap(api.GET("/api/directory")),
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** Sin `apply`, solo calcula qué cambiaría; con `apply`, lo guarda. */
+export function useDirectoryImport() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ body, apply }: { body: WpExport; apply: boolean }) =>
+      unwrap(api.POST("/api/directory/import", { params: { query: { apply } }, body })),
+    onSuccess: async (result) => {
+      if (result.applied) await queryClient.invalidateQueries({ queryKey: ["directory"] });
+    },
   });
 }
 
