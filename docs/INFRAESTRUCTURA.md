@@ -185,6 +185,7 @@ transacción. Sin evento, la acción no cuenta en los indicadores.
 | `GET /cases/live` | Situación de la sala: conteos y tiempos, sin datos de pacientes |
 | `PUT /contacts/{id}/consent` | Registrar o retirar el consentimiento para mensajes proactivos (NPS) |
 | `GET /metrics/overview?from=&to=&area_id=` · `/by-hour` · `/by-agent` · `/by-area` · `/reasons` · `/csat-daily` | Paneles (supervisor). Definiciones en `docs/METRICAS.md` |
+| `GET /reports/indicators.pdf?from=&to=&area_id=` | Informe en PDF: indicadores, comparación con el período anterior, conclusiones y gráficas (supervisor) |
 | `GET /metrics/cases/overview?from=&to=&area_id=` · `/by-area` · `/by-agent` · `/reasons` | Indicadores del módulo de Casos (supervisor) |
 | `GET /metrics/live` | Cola, urgentes, espera más antigua, agentes conectados |
 | `GET/POST/PATCH /admin/areas` · `/admin/reasons` · `/admin/faqs` · `/admin/agents` | Catálogos (rol admin) |
@@ -636,3 +637,8 @@ Diferencias con la versión original de este documento y su motivo:
     consultorio, horario, teléfonos, correos), conserva las líneas originales y marca para revisar lo
     que no entiende. La importación muestra antes qué cambia y no retira fichas si trae menos de la
     mitad de las actuales (descarga cortada). Ver: todos; actualizar: administradores.
+17. **Informe PDF**: `services/report_pdf.py` lo arma en el servidor con **ReportLab** (biblioteca
+    pura de Python, sin dependencias del sistema: funciona en Vercel) y sus gráficas propias. Solo usa
+    datos agregados, nunca datos de pacientes. Las conclusiones en lenguaje sencillo salen de
+    `services/report_analysis.py`, con criterios documentados en `docs/METRICAS.md`. Al generarse en
+    el servidor, más adelante se podrá enviar por correo de forma programada.

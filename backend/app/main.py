@@ -16,6 +16,7 @@ from app.api import (
     notifications,
     ops,
     patients,
+    reports,
     webhooks,
 )
 from app.services.conversations import ConversationError
@@ -47,6 +48,7 @@ for router in (
     cases.router,
     notifications.router,
     directory.router,
+    reports.router,
     metrics.router,
     admin.router,
     admin.catalog_router,

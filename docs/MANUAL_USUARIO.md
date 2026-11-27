@@ -506,7 +506,7 @@ panel cerrado. La campana se actualiza sola, sin recargar.
 ### 8.1 Elegir qué ver
 
 1. Arriba, elija **Casos** o **WhatsApp**. Se miden distinto y por eso van separados.
-2. Elija el período: **Hoy**, **7 días**, **30 días** o **Este mes**.
+2. Elija el período: **Hoy**, **7 días**, **30 días**, **Este mes** o **Mes anterior**.
 3. Opcional: filtre por **área**.
 
 El período y el área quedan en la dirección de la página: puede copiarla y compartirla.
@@ -558,11 +558,31 @@ También hay gráficos de mensajes por hora y CSAT por día, y tablas por área 
 
 ## 9. Informes
 
-*Solo supervisores y administradores.* Son las mismas cifras, en tablas detalladas que se descargan.
+*Solo supervisores y administradores.* Aquí se descarga el informe del período para compartirlo,
+por ejemplo en una reunión de gestión.
 
-1. Elija **Casos** o **WhatsApp**.
-2. Elija el período y, si quiere, el área.
-3. En cada tabla pulse **CSV** para descargarla. Se abre directamente en Excel, en español (separada por punto y coma y con coma decimal).
+### 9.1 El informe en PDF
+
+1. Elija **Casos** o **WhatsApp** (no cambia el PDF, que incluye ambos).
+2. Elija el período: **Hoy**, **7 días**, **30 días**, **Este mes** o **Mes anterior**. Para el informe mensual, use **Mes anterior**.
+3. Si quiere, elija un **área**.
+4. Pulse **Informe PDF**. Se descarga un archivo con el período en el nombre.
+
+El informe trae, en lenguaje sencillo:
+
+- **Resumen:** los ocho indicadores principales (NPS, CSAT, casos y chats atendidos a tiempo, tiempos y volumen), cada uno con su variación frente al período anterior de la misma duración.
+- **Lo más importante:** las conclusiones ordenadas por urgencia. **Verde** va bien, **ámbar** conviene vigilarlo, **rojo** requiere atención y **gris** es un dato informativo.
+- **Satisfacción del paciente:** el NPS con su barra de detractores, pasivos y promotores, y el CSAT por día.
+- **Casos entre áreas:** los casos atendidos a tiempo por área, con la meta marcada, una tabla por área y los motivos más frecuentes.
+- **Atención por WhatsApp:** los tiempos, el abandono y los mensajes por hora, para saber cuándo reforzar el personal.
+- **Cómo leer este informe:** un glosario breve.
+
+Los criterios de color (por ejemplo, un NPS desde 30 es bueno) están en [METRICAS.md](METRICAS.md).
+
+### 9.2 Tablas para Excel
+
+Debajo del encabezado están las tablas detalladas. En cada una pulse **CSV** para descargarla: se
+abre directamente en Excel, en español.
 
 | Vista | Tablas |
 |---|---|

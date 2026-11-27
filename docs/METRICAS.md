@@ -164,3 +164,23 @@ local de Caracas.
 | Creados hoy / Cerrados hoy | Casos con `opened_at` / `closed_at` en el día |
 | 1ª atención (mediana) | Casos abiertos hoy: desde la apertura hasta su primer `STAGE_CHANGED` a `in_progress`. Los aún no atendidos no cuentan |
 | Resolución (mediana) | Casos con `resolved_at` hoy: desde la apertura hasta `resolved_at`, descontando el tiempo en *En espera*. Si se reabrió, el tiempo entre medias cuenta |
+
+## Interpretación en el informe PDF
+
+El informe (`GET /reports/indicators.pdf`) usa las mismas fórmulas de este documento y las compara
+con el **período anterior de la misma duración**, justo antes. Las conclusiones salen de
+`backend/app/services/report_analysis.py` (pruebas en `backend/tests/test_reports.py`) con estos
+criterios de referencia, que el centro puede ajustar:
+
+| Indicador | Verde (va bien) | Ámbar (vigilar) | Rojo (requiere atención) |
+|---|---|---|---|
+| NPS | 30 o más («bueno»); 70 o más «excelente» | 0 a 29 («por mejorar») | menos de 0 («crítico») |
+| CSAT | 4,0 o más («bueno»); 4,5 o más «excelente» | 3,5 a 3,99 («aceptable») | menos de 3,5 («bajo») |
+| Meta cumplida (casos) y SLA (WhatsApp) | 90 % o más | 75 % a 89 % | menos de 75 % |
+| Abandono | 5 % o menos | hasta 10 % | más de 10 % |
+
+- Con menos de **30 respuestas**, el NPS se acompaña de un aviso de muestra pequeña.
+- El **área más débil** solo se señala si recibió al menos 5 casos y está por debajo del 90 %.
+- Las variaciones de **cantidades** se dan en porcentaje solo si el período anterior tuvo 10 o más;
+  si no, solo la diferencia (con una base chica, el porcentaje engaña).
+- Una variación se considera «igual» si es menor que medio punto, medio minuto o 0,05 en el CSAT.

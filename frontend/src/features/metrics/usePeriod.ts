@@ -1,13 +1,14 @@
 import { useSearchParams } from "react-router";
 import { TIMEZONE } from "@/lib/format";
 
-export type Preset = "today" | "7d" | "30d" | "month";
+export type Preset = "today" | "7d" | "30d" | "month" | "prev_month";
 
 export const PRESETS: { value: Preset; label: string }[] = [
   { value: "today", label: "Hoy" },
   { value: "7d", label: "7 días" },
   { value: "30d", label: "30 días" },
   { value: "month", label: "Este mes" },
+  { value: "prev_month", label: "Mes anterior" },
 ];
 
 const isoDay = new Intl.DateTimeFormat("en-CA", { timeZone: TIMEZONE });
@@ -29,6 +30,10 @@ export function rangeFor(preset: Preset, now = new Date()): { from: string; to: 
       return { from: shift(today, -29), to: today };
     case "month":
       return { from: `${today.slice(0, 8)}01`, to: today };
+    case "prev_month": {
+      const lastDay = shift(`${today.slice(0, 8)}01`, -1);
+      return { from: `${lastDay.slice(0, 8)}01`, to: lastDay };
+    }
   }
 }
 

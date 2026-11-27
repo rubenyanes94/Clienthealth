@@ -837,6 +837,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/reports/indicators.pdf": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Indicators Pdf
+     * @description Informe en PDF con los indicadores del período, conclusiones y gráficas.
+     */
+    get: operations["indicators_pdf_api_reports_indicators_pdf_get"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/metrics/overview": {
     parameters: {
       query?: never;
@@ -4411,6 +4431,39 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ImportPreview"];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"];
+        };
+      };
+    };
+  };
+  indicators_pdf_api_reports_indicators_pdf_get: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+        area_id?: number | null;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/pdf": unknown;
         };
       };
       /** @description Validation Error */

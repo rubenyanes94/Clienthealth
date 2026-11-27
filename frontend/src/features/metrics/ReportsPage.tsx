@@ -1,8 +1,11 @@
-import { Download } from "lucide-react";
+import { Download, FileDown } from "lucide-react";
+import { useState } from "react";
 import { useMetrics } from "@/api/hooks";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { useToast } from "@/components/ui/Toast";
 import { download, toCsv } from "./csv";
+import { downloadReportPdf } from "./reportPdf";
 import { Filters } from "./Filters";
 import { minutes, percent } from "./format";
 import { Card, Empty } from "./parts";
@@ -16,6 +19,8 @@ const r = (v: number | null | undefined) => (v === null || v === undefined ? nul
 export function ReportsPage() {
   const period = usePeriod();
   const { view, setView } = useView();
+  const toast = useToast();
+  const [generating, setGenerating] = useState(false);
 
   return (
     <SupervisorOnly>
@@ -23,11 +28,30 @@ export function ReportsPage() {
         <div className="mx-auto max-w-6xl px-3 py-3 sm:px-4 md:py-0">
           <PageHeader
             title="Informes"
-            subtitle="Tablas detalladas del período, descargables en CSV (se abren en Excel)."
+            subtitle="Informe en PDF con análisis y gráficas, y tablas detalladas descargables en CSV."
           >
             <div className="flex flex-wrap items-center gap-3">
               <ViewSwitch view={view} onChange={setView} />
               <Filters period={period} />
+              <Button
+                size="lg"
+                variant="primary"
+                disabled={generating}
+                onClick={async () => {
+                  setGenerating(true);
+                  try {
+                    await downloadReportPdf(period.query);
+                    toast.ok("Informe descargado");
+                  } catch (e) {
+                    toast.error((e as Error).message);
+                  } finally {
+                    setGenerating(false);
+                  }
+                }}
+              >
+                <FileDown className="size-5" aria-hidden />
+                {generating ? "Generando…" : "Informe PDF"}
+              </Button>
             </div>
           </PageHeader>
           {view === "casos" ? (
