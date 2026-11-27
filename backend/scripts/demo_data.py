@@ -156,6 +156,7 @@ def main() -> None:
                 build_conversation(db, rng, n, start, now, areas, reasons, agents)
         db.commit()
         print(f"{n} conversaciones de demostración creadas")
+        generate_nps(db, now)
         generate_cases(db, areas, reasons, agents, now)
 
 
@@ -279,6 +280,40 @@ def build_conversation(db, rng, n, start, now, areas, reasons, agents) -> None:
                 kind="csat",
                 score=survey.score,
             )
+
+
+# --- Encuesta NPS --------------------------------------------------------------------------------
+
+
+def generate_nps(db, now) -> None:
+    """Respuestas de la encuesta de recomendación (0 a 10) repartidas en las dos semanas."""
+    rng = random.Random(13)  # noqa: S311 (datos ficticios reproducibles)
+    chats = db.execute(
+        select(Conversation.id, Conversation.contact_id, Conversation.closed_at)
+        .join(Contact, Contact.id == Conversation.contact_id)
+        .where(Contact.wa_id.startswith(PREFIX), Conversation.closed_at.is_not(None))
+        .order_by(Conversation.id)
+    ).all()
+    answered = 0
+    for conversation_id, contact_id, closed_at in rng.sample(chats, min(70, len(chats))):
+        sent = closed_at + timedelta(hours=rng.randint(2, 48))
+        if sent > now - timedelta(hours=1):
+            continue
+        survey = Survey(
+            conversation_id=conversation_id,
+            contact_id=contact_id,
+            kind=SurveyKind.NPS,
+            status=SurveyStatus.SENT,
+            sent_at=sent,
+        )
+        if rng.random() < 0.75:  # no todos responden
+            survey.status = SurveyStatus.ANSWERED
+            survey.score = rng.choices(range(11), [2, 1, 1, 2, 2, 4, 6, 9, 14, 22, 37])[0]
+            survey.answered_at = min(sent + timedelta(minutes=rng.randint(3, 600)), now)
+            answered += 1
+        db.add(survey)
+    db.commit()
+    print(f"{answered} respuestas de NPS de demostración creadas")
 
 
 # --- Pacientes, casos, tareas y notificaciones ---------------------------------------------------
